@@ -12,6 +12,8 @@ import {
   Clock,
   Layers,
   AlertTriangle,
+  Award,
+  Sparkles,
 } from "lucide-react";
 import { getQuizById, saveQuiz } from "@/lib/quizStore";
 import { Quiz, Question, Option } from "@/lib/types";
@@ -38,6 +40,8 @@ function EditQuizContent() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [targetClasses, setTargetClasses] = useState<string[]>([]);
   const [customClassInput, setCustomClassInput] = useState("");
+  const [defaultPoints, setDefaultPoints] = useState<number>(20);
+  const [defaultOptionCount, setDefaultOptionCount] = useState<number>(4);
 
   const handleAddClass = () => {
     const clean = customClassInput.trim();
@@ -69,6 +73,15 @@ function EditQuizContent() {
         setIsActive(data.is_active);
         setQuestions(data.questions || []);
         setTargetClasses(data.target_classes || []);
+
+        if (data.questions && data.questions.length > 0) {
+          if (data.questions[0].points) {
+            setDefaultPoints(data.questions[0].points);
+          }
+          if (data.questions[0].options && data.questions[0].options.length >= 3) {
+            setDefaultOptionCount(data.questions[0].options.length);
+          }
+        }
       }
       setLoading(false);
     }
@@ -78,20 +91,24 @@ function EditQuizContent() {
   const handleAddQuestion = () => {
     sounds.playSelect();
     const newQId = "q-" + Date.now();
+    const newOptions: Option[] = [];
+    for (let i = 0; i < defaultOptionCount; i++) {
+      newOptions.push({
+        id: `opt-${newQId}-${i + 1}`,
+        option_text: "",
+        is_correct: i === 0,
+      });
+    }
+
     setQuestions((prev) => [
       ...prev,
       {
         id: newQId,
         question_text: "",
         image_url: undefined,
-        points: 20,
+        points: defaultPoints,
         order_index: prev.length,
-        options: [
-          { id: `opt-${newQId}-1`, option_text: "", is_correct: true },
-          { id: `opt-${newQId}-2`, option_text: "", is_correct: false },
-          { id: `opt-${newQId}-3`, option_text: "", is_correct: false },
-          { id: `opt-${newQId}-4`, option_text: "", is_correct: false },
-        ],
+        options: newOptions,
       },
     ]);
   };
@@ -165,6 +182,130 @@ function EditQuizContent() {
         ...opt,
         is_correct: i === optIdx,
       }));
+      return updated;
+    });
+  };
+
+  // Apply default points to all questions
+  const handleApplyDefaultPoints = (pts: number) => {
+    const clean = Math.max(1, Math.min(100, pts || 1));
+    setDefaultPoints(clean);
+    sounds.playSelect();
+    setQuestions((prev) =>
+      prev.map((q) => ({
+        ...q,
+        points: clean,
+      }))
+    );
+  };
+
+  // Auto divide 100 points among all questions
+  const handleAutoCalculatePoints = () => {
+    if (questions.length === 0) return;
+    sounds.playCorrect();
+    const calculated = Math.max(1, Math.round(100 / questions.length));
+    setDefaultPoints(calculated);
+    setQuestions((prev) =>
+      prev.map((q) => ({
+        ...q,
+        points: calculated,
+      }))
+    );
+  };
+
+  // Change default option count (3 to 5) and adjust all existing questions
+  const handleApplyDefaultOptionCount = (count: number) => {
+    if (count < 3 || count > 5) return;
+    sounds.playSelect();
+    setDefaultOptionCount(count);
+    setQuestions((prev) =>
+      prev.map((q) => {
+        const curCount = q.options.length;
+        if (curCount === count) return q;
+        if (curCount > count) {
+          const sliced = q.options.slice(0, count);
+          if (!sliced.some((o) => o.is_correct)) {
+            sliced[0].is_correct = true;
+          }
+          return { ...q, options: sliced };
+        } else {
+          const expanded = [...q.options];
+          for (let i = curCount; i < count; i++) {
+            expanded.push({
+              id: `opt-${q.id}-${Date.now()}-${i + 1}`,
+              option_text: "",
+              is_correct: false,
+            });
+          }
+          return { ...q, options: expanded };
+        }
+      })
+    );
+  };
+
+  // Set option count (3, 4, or 5) for a specific question
+  const handleSetQuestionOptionCount = (qIdx: number, targetCount: number) => {
+    if (targetCount < 3 || targetCount > 5) return;
+    sounds.playSelect();
+    setQuestions((prev) => {
+      const updated = [...prev];
+      const q = updated[qIdx];
+      const curCount = q.options.length;
+      if (curCount === targetCount) return updated;
+
+      if (curCount > targetCount) {
+        const sliced = q.options.slice(0, targetCount);
+        if (!sliced.some((o) => o.is_correct)) {
+          sliced[0].is_correct = true;
+        }
+        updated[qIdx] = { ...q, options: sliced };
+      } else {
+        const expanded = [...q.options];
+        for (let i = curCount; i < targetCount; i++) {
+          expanded.push({
+            id: `opt-${q.id}-${Date.now()}-${i + 1}`,
+            option_text: "",
+            is_correct: false,
+          });
+        }
+        updated[qIdx] = { ...q, options: expanded };
+      }
+      return updated;
+    });
+  };
+
+  // Add 1 option to a specific question (max 5)
+  const handleAddOptionToQuestion = (qIdx: number) => {
+    const q = questions[qIdx];
+    if (q.options.length >= 5) return;
+    sounds.playSelect();
+    const nextIdx = q.options.length;
+    setQuestions((prev) => {
+      const updated = [...prev];
+      updated[qIdx].options = [
+        ...updated[qIdx].options,
+        {
+          id: `opt-${q.id}-${Date.now()}-${nextIdx + 1}`,
+          option_text: "",
+          is_correct: false,
+        },
+      ];
+      return updated;
+    });
+  };
+
+  // Remove 1 option from a specific question (min 3)
+  const handleRemoveOptionFromQuestion = (qIdx: number, optIdx: number) => {
+    const q = questions[qIdx];
+    if (q.options.length <= 3) return;
+    sounds.playSelect();
+    setQuestions((prev) => {
+      const updated = [...prev];
+      const filtered = updated[qIdx].options.filter((_, i) => i !== optIdx);
+      if (!filtered.some((o) => o.is_correct) && filtered.length > 0) {
+        filtered[0].is_correct = true;
+      }
+      updated[qIdx].options = filtered;
       return updated;
     });
   };
@@ -498,6 +639,79 @@ function EditQuizContent() {
             </button>
           </div>
 
+          {/* Quick Global Defaults Bar */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-50/80 via-violet-50/60 to-slate-50 border border-indigo-100/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Default Poin */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Award className="w-4 h-4 text-indigo-600" />
+                <span>Poin per Soal:</span>
+              </span>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[10, 20, 25].map((pts) => (
+                  <button
+                    key={pts}
+                    type="button"
+                    onClick={() => handleApplyDefaultPoints(pts)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                      defaultPoints === pts
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs ring-2 ring-indigo-200"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-indigo-50 hover:text-indigo-600"
+                    }`}
+                  >
+                    {pts} Pts
+                  </button>
+                ))}
+
+                <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={defaultPoints}
+                    onChange={(e) => handleApplyDefaultPoints(Number(e.target.value))}
+                    className="w-12 text-center font-bold text-xs text-indigo-700 focus:outline-none"
+                  />
+                  <span className="text-[11px] text-slate-400 font-medium">Poin</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAutoCalculatePoints}
+                  title="Otomatis bagi 100 poin secara merata untuk seluruh soal"
+                  className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Sparkles className="w-3 h-3 text-emerald-600" />
+                  <span>Bagi Rata (Total 100 Poin)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Default Pilihan Ganda (3-5 Opsi) */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-indigo-100">
+              <span className="text-xs font-bold text-slate-700">
+                Pilihan Ganda:
+              </span>
+              <div className="flex items-center gap-1.5">
+                {[3, 4, 5].map((cnt) => (
+                  <button
+                    key={cnt}
+                    type="button"
+                    onClick={() => handleApplyDefaultOptionCount(cnt)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                      defaultOptionCount === cnt
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs ring-2 ring-indigo-200"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-indigo-50 hover:text-indigo-600"
+                    }`}
+                  >
+                    {cnt} Opsi ({cnt === 3 ? "A-C" : cnt === 4 ? "A-D" : "A-E"})
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {questions.map((question, qIdx) => (
             <div
               key={question.id || qIdx}
@@ -555,9 +769,33 @@ function EditQuizContent() {
               </div>
 
               <div className="space-y-2.5 pt-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Pilihan Jawaban (Pilih Kunci Jawaban Benar)
-                </label>
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Pilihan Jawaban (Tentukan Kunci Jawaban Benar)
+                  </label>
+
+                  {/* Per-question Option count chips (3, 4, 5) */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-slate-400 font-medium">Jumlah:</span>
+                    {[3, 4, 5].map((cnt) => {
+                      const isActive = question.options.length === cnt;
+                      return (
+                        <button
+                          key={cnt}
+                          type="button"
+                          onClick={() => handleSetQuestionOptionCount(qIdx, cnt)}
+                          className={`px-2 py-0.5 rounded-md text-[11px] font-bold border transition-colors cursor-pointer ${
+                            isActive
+                              ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                              : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
+                          }`}
+                        >
+                          {cnt} ({cnt === 3 ? "A-C" : cnt === 4 ? "A-D" : "A-E"})
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {question.options.map((opt, optIdx) => {
                   const letter = letters[optIdx] || `${optIdx + 1}`;
@@ -573,7 +811,7 @@ function EditQuizContent() {
                       <button
                         type="button"
                         onClick={() => handleSetCorrectOption(qIdx, optIdx)}
-                        className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors flex-shrink-0 ${
+                        className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer ${
                           opt.is_correct
                             ? "bg-emerald-600 text-white shadow-sm"
                             : "bg-slate-100 text-slate-500 hover:bg-slate-200"
@@ -589,6 +827,7 @@ function EditQuizContent() {
                         onChange={(e) =>
                           handleOptionTextChange(qIdx, optIdx, e.target.value)
                         }
+                        placeholder={`Pilihan ${letter}...`}
                         className="w-full px-3 py-1.5 rounded-lg border-none focus:outline-none text-sm text-slate-800 bg-transparent font-medium"
                       />
 
@@ -597,9 +836,31 @@ function EditQuizContent() {
                           Kunci Benar
                         </span>
                       )}
+
+                      {question.options.length > 3 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveOptionFromQuestion(qIdx, optIdx)}
+                          title={`Hapus Pilihan ${letter}`}
+                          className="p-1 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   );
                 })}
+
+                {question.options.length < 5 && (
+                  <button
+                    type="button"
+                    onClick={() => handleAddOptionToQuestion(qIdx)}
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer mt-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Tambah Pilihan ({letters[question.options.length]})</span>
+                  </button>
+                )}
               </div>
             </div>
           ))}

@@ -145,7 +145,7 @@ function PlayQuizContent() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toUpperCase();
-      const optionMap: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, 1: 0, 2: 1, 3: 2, 4: 3 };
+      const optionMap: Record<string, number> = { A: 0, B: 1, C: 2, D: 3, E: 4, 1: 0, 2: 1, 3: 2, 4: 3, 5: 4 };
 
       if (key in optionMap) {
         const index = optionMap[key];
