@@ -18,11 +18,13 @@ create table if not exists public.quizzes (
   time_limit_minutes int default 0, -- 0 jika tanpa batas waktu
   shuffle_questions boolean default false,
   target_classes text[] default '{}',
+  show_answer_review boolean default true,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Pastikan kolom target_classes ada jika tabel sudah dibuat sebelumnya
+-- Pastikan kolom baru ada jika tabel sudah dibuat sebelumnya
 alter table public.quizzes add column if not exists target_classes text[] default '{}';
+alter table public.quizzes add column if not exists show_answer_review boolean default true;
 
 -- 2. TABEL SOAL
 create table if not exists public.questions (

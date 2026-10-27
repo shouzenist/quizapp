@@ -20,6 +20,7 @@ import {
   HelpCircle,
   ShieldAlert,
   Image as ImageIcon,
+  EyeOff,
 } from "lucide-react";
 import { getQuizByCode, submitQuizAnswers } from "@/lib/quizStore";
 import { Quiz, Question, Option, StudentAnswer } from "@/lib/types";
@@ -662,59 +663,73 @@ function PlayQuizContent() {
           </div>
         </div>
 
-        <div className="text-left mb-8 border-t border-slate-100 pt-6">
-          <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-indigo-600" />
-            <span>Reviu Jawaban Soal</span>
-          </h3>
+        {quiz.show_answer_review !== false ? (
+          <div className="text-left mb-8 border-t border-slate-100 pt-6">
+            <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-indigo-600" />
+              <span>Reviu Jawaban Soal</span>
+            </h3>
 
-          <div className="space-y-3">
-            {questions.map((q, idx) => {
-              const studentAns = submittedAnswers.find((a) => a.question_id === q.id);
-              const isCorrect = studentAns?.is_correct;
-              const selectedOpt = q.options.find((o) => o.id === studentAns?.selected_option_id);
-              const correctOpt = q.options.find((o) => o.is_correct);
+            <div className="space-y-3">
+              {questions.map((q, idx) => {
+                const studentAns = submittedAnswers.find((a) => a.question_id === q.id);
+                const isCorrect = studentAns?.is_correct;
+                const selectedOpt = q.options.find((o) => o.id === studentAns?.selected_option_id);
+                const correctOpt = q.options.find((o) => o.is_correct);
 
-              return (
-                <div
-                  key={q.id}
-                  className={`p-3.5 rounded-xl border text-xs md:text-sm ${
-                    isCorrect
-                      ? "bg-emerald-50/50 border-emerald-200"
-                      : "bg-rose-50/50 border-rose-200"
-                  }`}
-                >
-                  <p className="font-semibold text-slate-800 mb-1.5">
-                    {idx + 1}. {q.question_text}
-                  </p>
-
-                  {/* Review image thumbnail */}
-                  {q.image_url && (
-                    <div className="my-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={q.image_url}
-                        alt="Gambar Soal"
-                        className="max-h-28 rounded-lg border border-slate-200 object-contain bg-white"
-                      />
-                    </div>
-                  )}
-
-                  <div className="space-y-0.5 text-xs">
-                    <p className={isCorrect ? "text-emerald-700 font-medium" : "text-rose-700 font-medium"}>
-                      Jawabanmu: {selectedOpt ? selectedOpt.option_text : "(Tidak dijawab)"} {isCorrect ? "✓" : "✗"}
+                return (
+                  <div
+                    key={q.id}
+                    className={`p-3.5 rounded-xl border text-xs md:text-sm ${
+                      isCorrect
+                        ? "bg-emerald-50/50 border-emerald-200"
+                        : "bg-rose-50/50 border-rose-200"
+                    }`}
+                  >
+                    <p className="font-semibold text-slate-800 mb-1.5">
+                      {idx + 1}. {q.question_text}
                     </p>
-                    {!isCorrect && correctOpt && (
-                      <p className="text-slate-500">
-                        Kunci Jawaban: <strong className="text-slate-700">{correctOpt.option_text}</strong>
-                      </p>
+
+                    {/* Review image thumbnail */}
+                    {q.image_url && (
+                      <div className="my-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={q.image_url}
+                          alt="Gambar Soal"
+                          className="max-h-28 rounded-lg border border-slate-200 object-contain bg-white"
+                        />
+                      </div>
                     )}
+
+                    <div className="space-y-0.5 text-xs">
+                      <p className={isCorrect ? "text-emerald-700 font-medium" : "text-rose-700 font-medium"}>
+                        Jawabanmu: {selectedOpt ? selectedOpt.option_text : "(Tidak dijawab)"} {isCorrect ? "✓" : "✗"}
+                      </p>
+                      {!isCorrect && correctOpt && (
+                        <p className="text-slate-500">
+                          Kunci Jawaban: <strong className="text-slate-700">{correctOpt.option_text}</strong>
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="my-6 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center">
+            <div className="w-9 h-9 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center mx-auto mb-2">
+              <EyeOff className="w-4 h-4" />
+            </div>
+            <p className="text-xs md:text-sm font-bold text-slate-800">
+              Review Jawaban Disembunyikan
+            </p>
+            <p className="text-[11px] md:text-xs text-slate-500 mt-0.5 max-w-sm mx-auto">
+              Guru menonaktifkan tampilan kunci jawaban untuk kuis ini. Nilai Anda telah tercatat dengan aman di sistem.
+            </p>
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button

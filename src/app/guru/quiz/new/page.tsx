@@ -32,6 +32,7 @@ function NewQuizContent() {
   const [quizCode, setQuizCode] = useState("");
   const [timeLimitMinutes, setTimeLimitMinutes] = useState(5);
   const [isActive, setIsActive] = useState(true);
+  const [showAnswerReview, setShowAnswerReview] = useState(true);
   const [targetClasses, setTargetClasses] = useState<string[]>(["7A", "7B", "7C", "7D"]);
   const [customClassInput, setCustomClassInput] = useState("");
 
@@ -408,6 +409,7 @@ function NewQuizContent() {
         quiz_code: quizCode.trim().toUpperCase() || Math.random().toString(36).substring(2, 8).toUpperCase(),
         time_limit_minutes: Number(timeLimitMinutes) || 0,
         is_active: isActive,
+        show_answer_review: showAnswerReview,
         target_classes: targetClasses,
         questions,
       });
@@ -553,7 +555,7 @@ function NewQuizContent() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-6 pt-6 md:col-span-2">
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
@@ -565,6 +567,26 @@ function NewQuizContent() {
                 <span className="ml-3 text-xs font-semibold text-slate-700">
                   {isActive ? "Kuis Aktif (Bisa Dikerjakan)" : "Kuis Nonaktif"}
                 </span>
+              </label>
+
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showAnswerReview}
+                  onChange={(e) => setShowAnswerReview(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                <div className="ml-3">
+                  <span className="text-xs font-semibold text-slate-700 block">
+                    {showAnswerReview ? "Tampilkan Review Jawaban ke Siswa" : "Jangan Tampilkan Review Jawaban"}
+                  </span>
+                  <span className="text-[11px] text-slate-400 block">
+                    {showAnswerReview
+                      ? "Siswa dapat melihat kunci jawaban & pembahasan setelah selesai."
+                      : "Kunci jawaban dirahasiakan dari siswa (demi keamanan ujian)."}
+                  </span>
+                </div>
               </label>
             </div>
 

@@ -16,8 +16,11 @@ import {
   Search,
   CheckCircle2,
   Award,
+  Eye,
+  EyeOff,
+  X,
 } from "lucide-react";
-import { getQuizById, getSubmissionsByQuizId } from "@/lib/quizStore";
+import { getQuizById, getSubmissionsByQuizId, saveQuiz } from "@/lib/quizStore";
 import { Quiz, Submission } from "@/lib/types";
 import { sounds } from "@/lib/sound";
 
@@ -28,10 +31,22 @@ function QuizResultsContent() {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
   // Filters
   const [selectedClass, setSelectedClass] = useState<string>("ALL");
   const [searchName, setSearchName] = useState<string>("");
+
+  const handleToggleReview = async () => {
+    if (!quiz) return;
+    sounds.playSelect();
+    const currentVal = quiz.show_answer_review !== false;
+    const updated = await saveQuiz({
+      ...quiz,
+      show_answer_review: !currentVal,
+    });
+    setQuiz(updated);
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -135,14 +150,38 @@ function QuizResultsContent() {
           <span>Kembali ke Dashboard Guru</span>
         </Link>
 
-        {/* Export Excel Button */}
-        <button
-          onClick={handleExportExcel}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs md:text-sm shadow-md shadow-emerald-600/20 active:scale-95 transition-all self-start sm:self-auto cursor-pointer"
-        >
-          <Download className="w-4 h-4" />
-          <span>Download Excel (.xlsx)</span>
-        </button>
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={handleToggleReview}
+            title="Atur apakah murid boleh melihat review jawaban setelah kuis selesai"
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-bold border transition-all cursor-pointer ${
+              quiz?.show_answer_review !== false
+                ? "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                : "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
+            }`}
+          >
+            {quiz?.show_answer_review !== false ? (
+              <>
+                <Eye className="w-4 h-4" />
+                <span>Review Murid: Tampil</span>
+              </>
+            ) : (
+              <>
+                <EyeOff className="w-4 h-4" />
+                <span>Review Murid: Sembunyi</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handleExportExcel}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs md:text-sm shadow-md shadow-emerald-600/20 active:scale-95 transition-all cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download Excel (.xlsx)</span>
+          </button>
+        </div>
       </div>
 
       {/* Quiz Header Title */}
@@ -249,13 +288,14 @@ function QuizResultsContent() {
                 <th className="py-3.5 px-4 text-center">Nilai</th>
                 <th className="py-3.5 px-4 text-center">Benar</th>
                 <th className="py-3.5 px-4 text-center">Pindah Tab</th>
+                <th className="py-3.5 px-4 text-center">Review Jawaban</th>
                 <th className="py-3.5 px-4 text-right">Waktu Selesai</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredSubmissions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400">
+                  <td colSpan={8} className="text-center py-12 text-slate-400">
                     Belum ada data murid yang sesuai filter.
                   </td>
                 </tr>
@@ -317,6 +357,19 @@ function QuizResultsContent() {
                           <span className="text-slate-400">0</span>
                         )}
                       </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            sounds.playSelect();
+                            setSelectedSubmission(sub);
+                          }}
+                          className="px-2.5 py-1 text-xs rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200 transition-colors cursor-pointer inline-flex items-center gap-1"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Lihat</span>
+                        </button>
+                      </td>
                       <td className="py-3.5 px-4 text-right text-slate-500 text-xs">
                         {new Date(sub.completed_at).toLocaleTimeString("id-ID", {
                           hour: "2-digit",
@@ -331,6 +384,135 @@ function QuizResultsContent() {
           </table>
         </div>
       </div>
+
+      {/* Modal Review Jawaban Siswa untuk Guru */}
+      {selectedSubmission && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-5 md:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
+                  Review Lembar Jawaban Siswa
+                </span>
+                <h3 className="text-lg md:text-xl font-extrabold text-slate-900 mt-1">
+                  {selectedSubmission.student_name}{" "}
+                  <span className="text-slate-400 font-normal">({selectedSubmission.student_class})</span>
+                </h3>
+              </div>
+
+              <button
+                onClick={() => setSelectedSubmission(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Score Summary in Modal */}
+            <div className="grid grid-cols-3 gap-3 p-4 bg-indigo-50/40 border-b border-slate-100 text-center">
+              <div>
+                <span className="text-[11px] text-slate-400 block font-medium">Nilai Akhir</span>
+                <span className="text-2xl font-black text-indigo-700 font-mono">
+                  {selectedSubmission.score}
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-slate-400 block font-medium">Benar / Total</span>
+                <span className="text-xl font-bold text-emerald-600 font-mono">
+                  {selectedSubmission.correct_answers} / {selectedSubmission.total_questions}
+                </span>
+              </div>
+              <div>
+                <span className="text-[11px] text-slate-400 block font-medium">Pindah Tab</span>
+                <span className="text-xl font-bold text-slate-700 font-mono">
+                  {selectedSubmission.tab_switch_count}x
+                </span>
+              </div>
+            </div>
+
+            {/* Questions Review List */}
+            <div className="p-5 md:p-6 overflow-y-auto flex-1 space-y-4">
+              {quiz?.questions && quiz.questions.length > 0 ? (
+                quiz.questions.map((q, idx) => {
+                  const studentAns = selectedSubmission.answers?.find(
+                    (a) => a.question_id === q.id
+                  );
+                  const isCorrect = studentAns?.is_correct;
+                  const selectedOpt = q.options.find(
+                    (o) => o.id === studentAns?.selected_option_id
+                  );
+                  const correctOpt = q.options.find((o) => o.is_correct);
+
+                  return (
+                    <div
+                      key={q.id}
+                      className={`p-4 rounded-2xl border text-xs md:text-sm ${
+                        isCorrect
+                          ? "bg-emerald-50/40 border-emerald-200"
+                          : "bg-rose-50/40 border-rose-200"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <p className="font-bold text-slate-900 leading-snug">
+                          {idx + 1}. {q.question_text}
+                        </p>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${
+                            isCorrect
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-rose-100 text-rose-800"
+                          }`}
+                        >
+                          {isCorrect ? "✓ Benar" : "✗ Salah"}
+                        </span>
+                      </div>
+
+                      {q.image_url && (
+                        <div className="my-2.5">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={q.image_url}
+                            alt="Ilustrasi Soal"
+                            className="max-h-32 rounded-xl border border-slate-200 object-contain bg-white"
+                          />
+                        </div>
+                      )}
+
+                      <div className="space-y-1 mt-2 pt-2 border-t border-slate-200/60 text-xs">
+                        <p className={isCorrect ? "text-emerald-700 font-semibold" : "text-rose-700 font-semibold"}>
+                          Jawaban Murid: {selectedOpt ? selectedOpt.option_text : "(Tidak dijawab / Kosong)"}
+                        </p>
+                        {!isCorrect && correctOpt && (
+                          <p className="text-slate-600">
+                            Kunci Jawaban Benar:{" "}
+                            <strong className="text-slate-900 font-bold">{correctOpt.option_text}</strong>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-center text-xs text-slate-400 py-6">
+                  Detail butir pertanyaan tidak tersedia.
+                </p>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedSubmission(null)}
+                className="px-5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

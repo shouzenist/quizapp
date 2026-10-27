@@ -23,6 +23,7 @@ export interface Quiz {
   subject?: string;
   quiz_code: string; // 6-digit code e.g. "QK8821"
   is_active: boolean;
+  show_answer_review?: boolean; // true = show answer review to students, false = hide
   time_limit_minutes: number; // 0 for unlimited
   shuffle_questions: boolean;
   target_classes?: string[];

@@ -19,6 +19,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   Radio,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { getAllQuizzes, deleteQuiz, saveQuiz, getSupabaseDiagnostic } from "@/lib/quizStore";
 import { Quiz } from "@/lib/types";
@@ -90,6 +92,16 @@ export default function TeacherDashboard() {
     await saveQuiz({
       ...quiz,
       is_active: !quiz.is_active,
+    });
+    await loadData();
+  };
+
+  const handleToggleReview = async (quiz: Quiz) => {
+    sounds.playSelect();
+    const currentVal = quiz.show_answer_review !== false;
+    await saveQuiz({
+      ...quiz,
+      show_answer_review: !currentVal,
     });
     await loadData();
   };
@@ -291,6 +303,33 @@ export default function TeacherDashboard() {
                     >
                       {quiz.is_active ? "● Aktif" : "○ Nonaktif"}
                     </button>
+
+                    <button
+                      onClick={() => handleToggleReview(quiz)}
+                      title={
+                        quiz.show_answer_review !== false
+                          ? "Klik untuk sembunyikan review kunci jawaban dari murid"
+                          : "Klik untuk tampilkan review kunci jawaban ke murid"
+                      }
+                      className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-colors cursor-pointer flex items-center gap-1 ${
+                        quiz.show_answer_review !== false
+                          ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100"
+                          : "bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+                      }`}
+                    >
+                      {quiz.show_answer_review !== false ? (
+                        <>
+                          <Eye className="w-3 h-3" />
+                          <span>Review: Tampil</span>
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff className="w-3 h-3" />
+                          <span>Review: Sembunyi</span>
+                        </>
+                      )}
+                    </button>
+
                     {quiz.time_limit_minutes > 0 && (
                       <span className="text-[11px] text-slate-500 flex items-center gap-1">
                         <Clock className="w-3 h-3" />

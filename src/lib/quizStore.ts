@@ -14,6 +14,7 @@ const DEMO_QUIZZES: Quiz[] = [
     subject: "Pengetahuan Umum",
     quiz_code: "PINTAR",
     is_active: true,
+    show_answer_review: true,
     time_limit_minutes: 5,
     shuffle_questions: false,
     target_classes: ["7A", "7B", "7C", "7D"],
@@ -89,6 +90,7 @@ const DEMO_QUIZZES: Quiz[] = [
     subject: "Matematika",
     quiz_code: "JUARA1",
     is_active: true,
+    show_answer_review: true,
     time_limit_minutes: 3,
     shuffle_questions: false,
     target_classes: ["10 MIPA 1", "10 MIPA 2", "10 IPS 1"],
@@ -318,6 +320,7 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
           time_limit_minutes: quizData.time_limit_minutes ?? 0,
           shuffle_questions: quizData.shuffle_questions ?? false,
           target_classes: quizData.target_classes || [],
+          show_answer_review: quizData.show_answer_review ?? true,
         })
         .select()
         .single();
@@ -373,6 +376,7 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
       ...quizzes[existingIndex],
       ...quizData,
       target_classes: quizData.target_classes ?? quizzes[existingIndex].target_classes ?? [],
+      show_answer_review: quizData.show_answer_review ?? quizzes[existingIndex].show_answer_review ?? true,
     } as Quiz;
     quizzes[existingIndex] = updated;
     saveLocalQuizzes(quizzes);
@@ -388,6 +392,7 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
       time_limit_minutes: quizData.time_limit_minutes ?? 0,
       shuffle_questions: quizData.shuffle_questions ?? false,
       target_classes: quizData.target_classes || [],
+      show_answer_review: quizData.show_answer_review ?? true,
       created_at: new Date().toISOString(),
       questions: quizData.questions || [],
       submissions_count: 0,
