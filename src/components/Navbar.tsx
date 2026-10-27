@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Sparkles, BookOpen, Volume2, VolumeX, Database, GraduationCap } from "lucide-react";
+import { Sparkles, BookOpen, Volume2, VolumeX, Database, GraduationCap, Lock } from "lucide-react";
 import { sounds } from "@/lib/sound";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
@@ -93,6 +93,7 @@ export default function Navbar() {
             >
               <BookOpen className="w-3.5 h-3.5" />
               <span>Portal Guru</span>
+              <Lock className="w-3 h-3 opacity-60 ml-0.5" />
             </Link>
           </nav>
         </div>
