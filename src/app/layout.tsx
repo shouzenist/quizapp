@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QuizPintar - Kuis Interaktif Guru & Murid",
-  description: "Platform kuis interaktif modern untuk sekolah. Murid cukup masukkan nama & kelas tanpa perlu registrasi.",
+  title: "3G Quiz - SMP Negeri 3 Godean",
+  description: "Platform kuis interaktif modern SMP Negeri 3 Godean. Murid cukup masukkan nama & kelas tanpa perlu registrasi.",
 };
 
 export default function RootLayout({
@@ -37,7 +37,7 @@ export default function RootLayout({
         <footer className="border-t border-slate-200 bg-white/70 backdrop-blur-md py-6 text-center text-sm text-slate-500">
           <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="flex items-center gap-2">
-              <span className="font-semibold text-indigo-600">QuizPintar</span> — Platform Kuis Interaktif Tanpa Ribet
+              <span className="font-semibold text-indigo-600">3G Quiz</span> — SMP Negeri 3 Godean
             </p>
             <p className="text-xs text-slate-400">
               Mendukung Vercel & Supabase PostgreSQL

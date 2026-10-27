@@ -1,6 +1,6 @@
-# 🚀 QuizPintar - Platform Kuis Interaktif Guru & Murid
+# 🚀 3G Quiz - Platform Kuis Interaktif SMP Negeri 3 Godean
 
-Aplikasi kuis interaktif modern yang dirancang khusus untuk pembelajaran sekolah dengan sistem **Zero-Friction bagi murid** (cukup masukkan Nama & Kelas tanpa perlu login atau registrasi). Aplikasi ini siap dideploy ke **Vercel** dengan database **Supabase**.
+Aplikasi kuis interaktif modern yang dirancang khusus untuk pembelajaran di **SMP Negeri 3 Godean** dengan sistem **Zero-Friction bagi murid** (cukup masukkan Nama & Kelas tanpa perlu login atau registrasi). Aplikasi ini siap dideploy ke **Vercel** dengan database **Supabase**.
 
 ---
 

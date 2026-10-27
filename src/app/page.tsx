@@ -53,7 +53,7 @@ export default function Home() {
         {/* Hero Badge */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs md:text-sm font-semibold mb-6 shadow-sm">
           <Sparkles className="w-4 h-4 text-indigo-600 animate-pulse" />
-          <span>Platform Kuis Modern & Zero-Friction untuk Sekolah</span>
+          <span>Platform Kuis Modern & Zero-Friction SMP Negeri 3 Godean</span>
         </div>
 
         {/* Hero Title */}
