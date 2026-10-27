@@ -1,16 +1,24 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const rawKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
+export const supabaseUrl = rawUrl.trim().replace(/^["']|["']$/g, "");
+export const supabaseAnonKey = rawKey.trim().replace(/^["']|["']$/g, "");
 
 export const isSupabaseConfigured = Boolean(
   supabaseUrl && 
   supabaseAnonKey && 
-  supabaseUrl !== "YOUR_SUPABASE_URL" &&
-  !supabaseUrl.includes("placeholder")
+  supabaseUrl.startsWith("http") &&
+  !supabaseUrl.includes("placeholder") &&
+  !supabaseUrl.includes("your-project-id")
 );
 
-// Fallback dummy client if credentials aren't set yet during local development
+// Supabase client instance
 export const supabase = isSupabaseConfigured
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+      },
+    })
   : createClient("https://dummy.supabase.co", "dummy-key");

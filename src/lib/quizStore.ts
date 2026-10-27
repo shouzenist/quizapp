@@ -1,9 +1,14 @@
 import { Quiz, Question, Submission, StudentAnswer } from "./types";
-import { supabase, isSupabaseConfigured } from "./supabase";
+import { supabase, isSupabaseConfigured, supabaseUrl } from "./supabase";
+
+export function isValidUuid(str?: string): boolean {
+  if (!str) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
 
 const DEMO_QUIZZES: Quiz[] = [
   {
-    id: "quiz-demo-1",
+    id: "d0000001-0000-0000-0000-000000000001",
     title: "Kuis Wawasan Nusantara & Sains Seru",
     description: "Uji seberapa luas pengetahuanmu tentang alam, sains, dan Indonesia! Jawab dengan teliti ya.",
     subject: "Pengetahuan Umum",
@@ -15,69 +20,69 @@ const DEMO_QUIZZES: Quiz[] = [
     submissions_count: 5,
     questions: [
       {
-        id: "q-1",
+        id: "d0000001-0000-0000-0000-000000000011",
         question_text: "Apa nama ibu kota negara Indonesia yang baru yang berada di Kalimantan Timur?",
         points: 20,
         order_index: 0,
         options: [
-          { id: "opt-1-1", option_text: "Nusantara (IKN)", is_correct: true },
-          { id: "opt-1-2", option_text: "Balikpapan", is_correct: false },
-          { id: "opt-1-3", option_text: "Samarinda", is_correct: false },
-          { id: "opt-1-4", option_text: "Banjarmasin", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000111", option_text: "Nusantara (IKN)", is_correct: true },
+          { id: "d0000001-0000-0000-0000-000000000112", option_text: "Balikpapan", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000113", option_text: "Samarinda", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000114", option_text: "Banjarmasin", is_correct: false },
         ],
       },
       {
-        id: "q-2",
+        id: "d0000001-0000-0000-0000-000000000012",
         question_text: "Planet manakah yang dijuluki sebagai 'Planet Merah' dalam tata surya kita?",
         points: 20,
         order_index: 1,
         options: [
-          { id: "opt-2-1", option_text: "Venus", is_correct: false },
-          { id: "opt-2-2", option_text: "Mars", is_correct: true },
-          { id: "opt-2-3", option_text: "Jupiter", is_correct: false },
-          { id: "opt-2-4", option_text: "Merkurius", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000121", option_text: "Venus", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000122", option_text: "Mars", is_correct: true },
+          { id: "d0000001-0000-0000-0000-000000000123", option_text: "Jupiter", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000124", option_text: "Merkurius", is_correct: false },
         ],
       },
       {
-        id: "q-3",
+        id: "d0000001-0000-0000-0000-000000000013",
         question_text: "Organ tubuh manusia yang berfungsi memompa darah ke seluruh tubuh adalah...",
         points: 20,
         order_index: 2,
         options: [
-          { id: "opt-3-1", option_text: "Paru-paru", is_correct: false },
-          { id: "opt-3-2", option_text: "Lambung", is_correct: false },
-          { id: "opt-3-3", option_text: "Jantung", is_correct: true },
-          { id: "opt-3-4", option_text: "Hati", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000131", option_text: "Paru-paru", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000132", option_text: "Lambung", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000133", option_text: "Jantung", is_correct: true },
+          { id: "d0000001-0000-0000-0000-000000000134", option_text: "Hati", is_correct: false },
         ],
       },
       {
-        id: "q-4",
+        id: "d0000001-0000-0000-0000-000000000014",
         question_text: "Siapakah tokoh pahlawan nasional yang dikenal sebagai 'Bapak Pendidikan Nasional'?",
         points: 20,
         order_index: 3,
         options: [
-          { id: "opt-4-1", option_text: "Ki Hajar Dewantara", is_correct: true },
-          { id: "opt-4-2", option_text: "Ir. Soekarno", is_correct: false },
-          { id: "opt-4-3", option_text: "Mohammad Hatta", is_correct: false },
-          { id: "opt-4-4", option_text: "R.A. Kartini", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000141", option_text: "Ki Hajar Dewantara", is_correct: true },
+          { id: "d0000001-0000-0000-0000-000000000142", option_text: "Ir. Soekarno", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000143", option_text: "Mohammad Hatta", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000144", option_text: "R.A. Kartini", is_correct: false },
         ],
       },
       {
-        id: "q-5",
+        id: "d0000001-0000-0000-0000-000000000015",
         question_text: "Gas apakah yang diserap oleh tumbuhan hijau pada saat proses fotosintesis?",
         points: 20,
         order_index: 4,
         options: [
-          { id: "opt-5-1", option_text: "Oksigen", is_correct: false },
-          { id: "opt-5-2", option_text: "Nitrogen", is_correct: false },
-          { id: "opt-5-3", option_text: "Karbondioksida (CO2)", is_correct: true },
-          { id: "opt-5-4", option_text: "Hidrogen", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000151", option_text: "Oksigen", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000152", option_text: "Nitrogen", is_correct: false },
+          { id: "d0000001-0000-0000-0000-000000000153", option_text: "Karbondioksida (CO2)", is_correct: true },
+          { id: "d0000001-0000-0000-0000-000000000154", option_text: "Hidrogen", is_correct: false },
         ],
       },
     ],
   },
   {
-    id: "quiz-demo-2",
+    id: "d0000002-0000-0000-0000-000000000002",
     title: "Matematika & Asah Logika Cepat",
     description: "Kuis latihan berhitung dan logika berpikir tingkat SMP/SMA.",
     subject: "Matematika",
@@ -89,119 +94,34 @@ const DEMO_QUIZZES: Quiz[] = [
     submissions_count: 3,
     questions: [
       {
-        id: "m-1",
+        id: "d0000002-0000-0000-0000-000000000021",
         question_text: "Berapakah hasil dari: 15 + 25 × 2 ?",
         points: 25,
         order_index: 0,
         options: [
-          { id: "m-1-1", option_text: "80", is_correct: false },
-          { id: "m-1-2", option_text: "65", is_correct: true },
-          { id: "m-1-3", option_text: "70", is_correct: false },
-          { id: "m-1-4", option_text: "55", is_correct: false },
+          { id: "d0000002-0000-0000-0000-000000000211", option_text: "80", is_correct: false },
+          { id: "d0000002-0000-0000-0000-000000000212", option_text: "65", is_correct: true },
+          { id: "d0000002-0000-0000-0000-000000000213", option_text: "70", is_correct: false },
+          { id: "d0000002-0000-0000-0000-000000000214", option_text: "55", is_correct: false },
         ],
       },
       {
-        id: "m-2",
+        id: "d0000002-0000-0000-0000-000000000022",
         question_text: "Jika sebuah persegi memiliki keliling 40 cm, berapakah luas persegi tersebut?",
         points: 25,
         order_index: 1,
         options: [
-          { id: "m-2-1", option_text: "100 cm²", is_correct: true },
-          { id: "m-2-2", option_text: "160 cm²", is_correct: false },
-          { id: "m-2-3", option_text: "80 cm²", is_correct: false },
-          { id: "m-2-4", option_text: "20 cm²", is_correct: false },
-        ],
-      },
-      {
-        id: "m-3",
-        question_text: "Bilangan prima terkecil yang lebih besar dari 10 adalah...",
-        points: 25,
-        order_index: 2,
-        options: [
-          { id: "m-3-1", option_text: "11", is_correct: true },
-          { id: "m-3-2", option_text: "12", is_correct: false },
-          { id: "m-3-3", option_text: "13", is_correct: false },
-          { id: "m-3-4", option_text: "15", is_correct: false },
-        ],
-      },
-      {
-        id: "m-4",
-        question_text: "Jika 3 buku seharga Rp 45.000, berapakah harga untuk 5 buku serupa?",
-        points: 25,
-        order_index: 3,
-        options: [
-          { id: "m-4-1", option_text: "Rp 60.000", is_correct: false },
-          { id: "m-4-2", option_text: "Rp 70.000", is_correct: false },
-          { id: "m-4-3", option_text: "Rp 75.000", is_correct: true },
-          { id: "m-4-4", option_text: "Rp 90.000", is_correct: false },
+          { id: "d0000002-0000-0000-0000-000000000221", option_text: "100 cm²", is_correct: true },
+          { id: "d0000002-0000-0000-0000-000000000222", option_text: "160 cm²", is_correct: false },
+          { id: "d0000002-0000-0000-0000-000000000223", option_text: "80 cm²", is_correct: false },
+          { id: "d0000002-0000-0000-0000-000000000224", option_text: "20 cm²", is_correct: false },
         ],
       },
     ],
   },
 ];
 
-const DEMO_SUBMISSIONS: Submission[] = [
-  {
-    id: "sub-1",
-    quiz_id: "quiz-demo-1",
-    student_name: "Ahmad Fauzi",
-    student_class: "7A",
-    score: 100,
-    total_questions: 5,
-    correct_answers: 5,
-    tab_switch_count: 0,
-    started_at: new Date(Date.now() - 3600000).toISOString(),
-    completed_at: new Date(Date.now() - 3400000).toISOString(),
-  },
-  {
-    id: "sub-2",
-    quiz_id: "quiz-demo-1",
-    student_name: "Siti Rahmawati",
-    student_class: "7A",
-    score: 80,
-    total_questions: 5,
-    correct_answers: 4,
-    tab_switch_count: 0,
-    started_at: new Date(Date.now() - 7200000).toISOString(),
-    completed_at: new Date(Date.now() - 7000000).toISOString(),
-  },
-  {
-    id: "sub-3",
-    quiz_id: "quiz-demo-1",
-    student_name: "Budi Santoso",
-    student_class: "7B",
-    score: 60,
-    total_questions: 5,
-    correct_answers: 3,
-    tab_switch_count: 1,
-    started_at: new Date(Date.now() - 5000000).toISOString(),
-    completed_at: new Date(Date.now() - 4800000).toISOString(),
-  },
-  {
-    id: "sub-4",
-    quiz_id: "quiz-demo-1",
-    student_name: "Dewi Lestari",
-    student_class: "7B",
-    score: 100,
-    total_questions: 5,
-    correct_answers: 5,
-    tab_switch_count: 0,
-    started_at: new Date(Date.now() - 2500000).toISOString(),
-    completed_at: new Date(Date.now() - 2300000).toISOString(),
-  },
-  {
-    id: "sub-5",
-    quiz_id: "quiz-demo-1",
-    student_name: "Rizky Pratama",
-    student_class: "7A",
-    score: 80,
-    total_questions: 5,
-    correct_answers: 4,
-    tab_switch_count: 0,
-    started_at: new Date(Date.now() - 1500000).toISOString(),
-    completed_at: new Date(Date.now() - 1300000).toISOString(),
-  },
-];
+const DEMO_SUBMISSIONS: Submission[] = [];
 
 // LocalStorage helpers
 function getLocalQuizzes(): Quiz[] {
@@ -243,6 +163,49 @@ function saveLocalSubmissions(submissions: Submission[]) {
 }
 
 // -------------------------------------------------------------
+// CONNECTION DIAGNOSTICS
+// -------------------------------------------------------------
+export async function getSupabaseDiagnostic(): Promise<{
+  isConfigured: boolean;
+  connected: boolean;
+  message: string;
+  error?: string;
+}> {
+  if (!isSupabaseConfigured) {
+    return {
+      isConfigured: false,
+      connected: false,
+      message: "Variabel NEXT_PUBLIC_SUPABASE_URL belum terbaca di Vercel.",
+    };
+  }
+
+  try {
+    const { data, error } = await supabase.from("quizzes").select("id").limit(1);
+    if (error) {
+      return {
+        isConfigured: true,
+        connected: false,
+        message: `Koneksi Supabase Error: ${error.message}`,
+        error: error.message,
+      };
+    }
+    return {
+      isConfigured: true,
+      connected: true,
+      message: `Tersambung ke Supabase (${supabaseUrl.replace(/^https?:\/\//, "").split(".")[0]})`,
+    };
+  } catch (err: unknown) {
+    const errObj = err as { message?: string };
+    return {
+      isConfigured: true,
+      connected: false,
+      message: `Gagal mengakses Supabase: ${errObj.message || "Network Error"}`,
+      error: errObj.message,
+    };
+  }
+}
+
+// -------------------------------------------------------------
 // PUBLIC API FOR QUIZZES & SUBMISSIONS
 // -------------------------------------------------------------
 
@@ -251,15 +214,28 @@ export async function getAllQuizzes(): Promise<Quiz[]> {
     try {
       const { data, error } = await supabase
         .from("quizzes")
-        .select("*, questions(*, options(*)), submissions(count)")
+        .select("*, questions(*, options(*))")
         .order("created_at", { ascending: false });
 
       if (!error && data) {
+        // Query counts
+        const { data: subCounts } = await supabase
+          .from("submissions")
+          .select("quiz_id");
+
+        const countsMap: Record<string, number> = {};
+        if (subCounts) {
+          subCounts.forEach((s) => {
+            countsMap[s.quiz_id] = (countsMap[s.quiz_id] || 0) + 1;
+          });
+        }
+
         return data.map((q) => ({
           ...q,
-          submissions_count: q.submissions?.[0]?.count || 0,
+          submissions_count: countsMap[q.id] || 0,
         }));
       }
+      console.warn("Supabase query quizzes returned error:", error);
     } catch (e) {
       console.warn("Supabase query failed, falling back to local storage:", e);
     }
@@ -283,11 +259,12 @@ export async function getQuizByCode(code: string): Promise<Quiz | null> {
         .select("*, questions(*, options(*))")
         .eq("quiz_code", cleanCode)
         .eq("is_active", true)
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         return data as Quiz;
       }
+      console.warn("Supabase getQuizByCode error:", error);
     } catch (e) {
       console.warn("Supabase fetch failed, falling back to local storage:", e);
     }
@@ -301,13 +278,13 @@ export async function getQuizByCode(code: string): Promise<Quiz | null> {
 }
 
 export async function getQuizById(id: string): Promise<Quiz | null> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && isValidUuid(id)) {
     try {
       const { data, error } = await supabase
         .from("quizzes")
         .select("*, questions(*, options(*))")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         return data as Quiz;
@@ -324,9 +301,8 @@ export async function getQuizById(id: string): Promise<Quiz | null> {
 export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
   if (isSupabaseConfigured) {
     try {
-      // 1. Insert/Update Quiz in Supabase
-      const isNew = !quizData.id || quizData.id.startsWith("quiz-temp-");
-      const quizId = isNew ? undefined : quizData.id;
+      const hasValidId = isValidUuid(quizData.id);
+      const quizId = hasValidId ? quizData.id : undefined;
 
       const { data: quizResult, error: quizError } = await supabase
         .from("quizzes")
@@ -344,7 +320,12 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
         .single();
 
       if (!quizError && quizResult) {
-        // If questions provided, save questions and options
+        // If this was an update, delete old questions to recreate cleanly
+        if (hasValidId) {
+          await supabase.from("questions").delete().eq("quiz_id", quizResult.id);
+        }
+
+        // Insert fresh questions & options
         if (quizData.questions && quizData.questions.length > 0) {
           for (let i = 0; i < quizData.questions.length; i++) {
             const q = quizData.questions[i];
@@ -353,7 +334,8 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
               .insert({
                 quiz_id: quizResult.id,
                 question_text: q.question_text,
-                points: q.points,
+                image_url: q.image_url || null,
+                points: q.points || 10,
                 order_index: i,
               })
               .select()
@@ -369,7 +351,10 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
             }
           }
         }
+
         return quizResult as Quiz;
+      } else {
+        console.error("Supabase upsert quiz error:", quizError);
       }
     } catch (e) {
       console.warn("Supabase save failed, falling back to local storage:", e);
@@ -409,10 +394,16 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
 }
 
 export async function deleteQuiz(id: string): Promise<boolean> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && isValidUuid(id)) {
     try {
       const { error } = await supabase.from("quizzes").delete().eq("id", id);
-      if (!error) return true;
+      if (!error) {
+        // Also remove from local if it was there
+        const quizzes = getLocalQuizzes();
+        saveLocalQuizzes(quizzes.filter((q) => q.id !== id));
+        return true;
+      }
+      console.error("Supabase deleteQuiz error:", error);
     } catch (e) {
       console.warn("Supabase delete failed:", e);
     }
@@ -436,7 +427,7 @@ export async function submitQuizAnswers(params: {
   completed_at: string;
   answers: StudentAnswer[];
 }): Promise<Submission> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && isValidUuid(params.quiz_id)) {
     try {
       const { data: subData, error } = await supabase
         .from("submissions")
@@ -456,16 +447,21 @@ export async function submitQuizAnswers(params: {
 
       if (!error && subData) {
         if (params.answers.length > 0) {
-          const detailRows = params.answers.map((a) => ({
-            submission_id: subData.id,
-            question_id: a.question_id,
-            selected_option_id: a.selected_option_id,
-            is_correct: a.is_correct,
-          }));
-          await supabase.from("submission_answers").insert(detailRows);
+          const detailRows = params.answers
+            .filter((a) => isValidUuid(a.question_id))
+            .map((a) => ({
+              submission_id: subData.id,
+              question_id: a.question_id,
+              selected_option_id: isValidUuid(a.selected_option_id) ? a.selected_option_id : null,
+              is_correct: a.is_correct,
+            }));
+          if (detailRows.length > 0) {
+            await supabase.from("submission_answers").insert(detailRows);
+          }
         }
         return subData as Submission;
       }
+      console.error("Supabase insert submission error:", error);
     } catch (e) {
       console.warn("Supabase submission failed, falling back to local storage:", e);
     }
@@ -482,7 +478,7 @@ export async function submitQuizAnswers(params: {
 }
 
 export async function getSubmissionsByQuizId(quizId: string): Promise<Submission[]> {
-  if (isSupabaseConfigured) {
+  if (isSupabaseConfigured && isValidUuid(quizId)) {
     try {
       const { data, error } = await supabase
         .from("submissions")
@@ -493,6 +489,7 @@ export async function getSubmissionsByQuizId(quizId: string): Promise<Submission
       if (!error && data) {
         return data as Submission[];
       }
+      console.error("Supabase getSubmissionsByQuizId error:", error);
     } catch (e) {
       console.warn("Supabase fetch submissions failed:", e);
     }

@@ -7,40 +7,76 @@ import {
   BookOpen,
   Users,
   Award,
-  Share2,
   Trash2,
   Edit3,
   BarChart2,
   QrCode,
   Copy,
   Check,
-  CheckCircle,
-  AlertCircle,
   Clock,
   Sparkles,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle2,
+  Radio,
 } from "lucide-react";
-import { getAllQuizzes, deleteQuiz, saveQuiz } from "@/lib/quizStore";
+import { getAllQuizzes, deleteQuiz, saveQuiz, getSupabaseDiagnostic } from "@/lib/quizStore";
 import { Quiz } from "@/lib/types";
 import { sounds } from "@/lib/sound";
 import QRCodeModal from "@/components/QRCodeModal";
-import { isSupabaseConfigured } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export default function TeacherDashboard() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedQRQuiz, setSelectedQRQuiz] = useState<Quiz | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadData();
-  }, []);
+  const [diag, setDiag] = useState<{
+    isConfigured: boolean;
+    connected: boolean;
+    message: string;
+    error?: string;
+  } | null>(null);
 
   const loadData = async () => {
     setLoading(true);
-    const data = await getAllQuizzes();
+    const [data, diagnostic] = await Promise.all([
+      getAllQuizzes(),
+      getSupabaseDiagnostic(),
+    ]);
     setQuizzes(data);
+    setDiag(diagnostic);
     setLoading(false);
   };
+
+  useEffect(() => {
+    loadData();
+
+    // Setup Supabase Realtime channel if configured
+    if (isSupabaseConfigured) {
+      const channel = supabase
+        .channel("quizzes-live-sync")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "quizzes" },
+          () => {
+            loadData();
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "submissions" },
+          () => {
+            loadData();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, []);
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`Apakah Anda yakin ingin menghapus kuis "${title}"?`)) return;
@@ -86,34 +122,89 @@ export default function TeacherDashboard() {
           </p>
         </div>
 
-        <Link
-          href="/guru/quiz/new"
-          onClick={() => sounds.playSelect()}
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm shadow-md shadow-indigo-600/25 active:scale-95 transition-all self-start md:self-auto cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Buat Kuis Baru</span>
-        </Link>
-      </div>
+        <div className="flex items-center gap-3 self-start md:self-auto">
+          <button
+            onClick={() => {
+              sounds.playSelect();
+              loadData();
+            }}
+            disabled={loading}
+            title="Segarkan Data"
+            className="p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-sm transition-all active:scale-95 cursor-pointer"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-indigo-600" : ""}`} />
+          </button>
 
-      {/* Database Connection notice */}
-      <div className={`mb-8 p-4 rounded-2xl border text-xs md:text-sm flex items-center justify-between gap-4 ${
-        isSupabaseConfigured 
-          ? "bg-emerald-50/80 border-emerald-200 text-emerald-800"
-          : "bg-indigo-50/80 border-indigo-200 text-indigo-800"
-      }`}>
-        <div className="flex items-center gap-3">
-          <Sparkles className="w-5 h-5 flex-shrink-0" />
-          <div>
-            <strong>{isSupabaseConfigured ? "Supabase PostgreSQL Terhubung!" : "Siap Deploy ke Supabase & Vercel!"}</strong>
-            <p className="mt-0.5 opacity-90">
-              {isSupabaseConfigured
-                ? "Data tersinkronisasi secara langsung ke cloud database Supabase Anda."
-                : "Aplikasi berjalan penuh dalam mode demo. Hubungkan NEXT_PUBLIC_SUPABASE_URL di .env.local untuk database cloud Supabase."}
-            </p>
-          </div>
+          <Link
+            href="/guru/quiz/new"
+            onClick={() => sounds.playSelect()}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm shadow-md shadow-indigo-600/25 active:scale-95 transition-all cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Buat Kuis Baru</span>
+          </Link>
         </div>
       </div>
+
+      {/* Supabase Connection Status Card */}
+      {diag && (
+        <div
+          className={`mb-8 p-4 md:p-5 rounded-2xl border text-xs md:text-sm transition-all ${
+            diag.connected
+              ? "bg-emerald-50/90 border-emerald-200 text-emerald-900"
+              : diag.isConfigured
+              ? "bg-amber-50/90 border-amber-300 text-amber-900"
+              : "bg-indigo-50/90 border-indigo-200 text-indigo-900"
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start gap-3">
+              {diag.connected ? (
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <Radio className="w-4 h-4 animate-pulse" />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+              )}
+
+              <div>
+                <p className="font-bold flex items-center gap-2">
+                  <span>{diag.connected ? "Database Supabase Aktif & Sinkron Real-Time" : "Status Koneksi Cloud"}</span>
+                  {diag.connected && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-200/80 text-emerald-800 font-extrabold uppercase">
+                      Live
+                    </span>
+                  )}
+                </p>
+
+                <p className="text-xs opacity-90 mt-0.5">
+                  {diag.connected
+                    ? "Perubahan yang Anda lakukan di PC atau HP akan langsung tersinkronisasi detik itu juga."
+                    : diag.message}
+                </p>
+
+                {!diag.connected && diag.isConfigured && diag.error && (
+                  <div className="mt-2 p-2.5 rounded-xl bg-white/80 border border-amber-200 text-[11px] font-mono text-amber-800">
+                    <strong>Penyebab:</strong> {diag.error}
+                    <p className="mt-1 font-sans text-slate-600">
+                      👉 <em>Solusi:</em> Buka Supabase Dashboard -&gt; SQL Editor -&gt; Jalankan script file <code>supabase/schema.sql</code>.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={loadData}
+              className="text-xs font-bold underline hover:opacity-80 self-end sm:self-center"
+            >
+              Cek Ulang
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -161,7 +252,7 @@ export default function TeacherDashboard() {
         {loading ? (
           <div className="p-12 text-center bg-white rounded-2xl border border-slate-200">
             <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-xs text-slate-500">Memuat kuis...</p>
+            <p className="text-xs text-slate-500">Memuat data kuis...</p>
           </div>
         ) : quizzes.length === 0 ? (
           <div className="p-12 text-center bg-white rounded-2xl border border-slate-200">
@@ -238,7 +329,7 @@ export default function TeacherDashboard() {
                     <button
                       onClick={() => handleCopyCode(quiz.quiz_code, quiz.id)}
                       title="Salin Link Kuis"
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-200/60 transition-colors ml-1"
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-200/60 transition-colors ml-1 cursor-pointer"
                     >
                       {copiedId === quiz.id ? (
                         <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -255,7 +346,7 @@ export default function TeacherDashboard() {
                       setSelectedQRQuiz(quiz);
                     }}
                     title="Tampilkan QR Code untuk Proyektor"
-                    className="p-2.5 rounded-xl border border-slate-200 hover:border-indigo-400 text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50 transition-colors flex items-center justify-center gap-1 text-xs font-semibold"
+                    className="p-2.5 rounded-xl border border-slate-200 hover:border-indigo-400 text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50 transition-colors flex items-center justify-center gap-1 text-xs font-semibold cursor-pointer"
                   >
                     <QrCode className="w-4 h-4 text-indigo-600" />
                     <span className="sm:hidden">QR Proyektor</span>
@@ -284,7 +375,7 @@ export default function TeacherDashboard() {
                   {/* Delete Quiz */}
                   <button
                     onClick={() => handleDelete(quiz.id, quiz.title)}
-                    className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center"
+                    className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors flex items-center justify-center cursor-pointer"
                     title="Hapus Kuis"
                   >
                     <Trash2 className="w-4 h-4" />
