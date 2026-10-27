@@ -7,7 +7,6 @@ import {
   Sparkles,
   ArrowRight,
   BookOpen,
-  Award,
   Zap,
   ShieldAlert,
   FileSpreadsheet,
@@ -34,11 +33,6 @@ export default function Home() {
     router.push(`/play/${clean}`);
   };
 
-  const handleQuickCode = (code: string) => {
-    sounds.playSelect();
-    setQuizCode(code);
-    router.push(`/play/${code}`);
-  };
 
   return (
     <div className="flex-1 flex flex-col justify-between">
@@ -58,9 +52,10 @@ export default function Home() {
 
         {/* Hero Title */}
         <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-center text-slate-900 tracking-tight max-w-4xl leading-tight">
-          Kuis Interaktif Seru,{" "}
+          Aplikasi Interaktif Seru,
+          <br />
           <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-pink-600 bg-clip-text text-transparent">
-            Tanpa Perlu Login Murid
+            3G Quiz!
           </span>
         </h1>
 
@@ -112,30 +107,6 @@ export default function Home() {
               </button>
             </form>
 
-            {/* Quick Demo Quizzes */}
-            <div className="mt-6 pt-5 border-t border-slate-100">
-              <p className="text-xs text-slate-400 text-center mb-3">
-                Mau coba langsung? Klik salah satu kuis demo siap pakai:
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                <button
-                  type="button"
-                  onClick={() => handleQuickCode("PINTAR")}
-                  className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold border border-indigo-200/60 transition-colors flex items-center gap-1.5"
-                >
-                  <Award className="w-3.5 h-3.5" />
-                  <span>Kuis Umum: PINTAR</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickCode("JUARA1")}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200/60 transition-colors flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Matematika: JUARA1</span>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
 

@@ -40,7 +40,7 @@ export default function RootLayout({
               <span className="font-semibold text-indigo-600">3G Quiz</span> — SMP Negeri 3 Godean
             </p>
             <p className="text-xs text-slate-400">
-              Mendukung Vercel & Supabase PostgreSQL
+              Setiap hari adalah kesempatan baru untuk menjadi lebih baik dari kemarin.
             </p>
           </div>
         </footer>
