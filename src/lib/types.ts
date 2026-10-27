@@ -25,6 +25,7 @@ export interface Quiz {
   is_active: boolean;
   time_limit_minutes: number; // 0 for unlimited
   shuffle_questions: boolean;
+  target_classes?: string[];
   created_at: string;
   questions?: Question[];
   submissions_count?: number;

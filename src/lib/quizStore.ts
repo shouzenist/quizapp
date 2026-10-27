@@ -16,6 +16,7 @@ const DEMO_QUIZZES: Quiz[] = [
     is_active: true,
     time_limit_minutes: 5,
     shuffle_questions: false,
+    target_classes: ["7A", "7B", "7C", "7D"],
     created_at: new Date().toISOString(),
     submissions_count: 5,
     questions: [
@@ -90,6 +91,7 @@ const DEMO_QUIZZES: Quiz[] = [
     is_active: true,
     time_limit_minutes: 3,
     shuffle_questions: false,
+    target_classes: ["10 MIPA 1", "10 MIPA 2", "10 IPS 1"],
     created_at: new Date().toISOString(),
     submissions_count: 3,
     questions: [
@@ -315,6 +317,7 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
           is_active: quizData.is_active ?? true,
           time_limit_minutes: quizData.time_limit_minutes ?? 0,
           shuffle_questions: quizData.shuffle_questions ?? false,
+          target_classes: quizData.target_classes || [],
         })
         .select()
         .single();
@@ -369,6 +372,7 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
     const updated: Quiz = {
       ...quizzes[existingIndex],
       ...quizData,
+      target_classes: quizData.target_classes ?? quizzes[existingIndex].target_classes ?? [],
     } as Quiz;
     quizzes[existingIndex] = updated;
     saveLocalQuizzes(quizzes);
@@ -383,6 +387,7 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
       is_active: quizData.is_active ?? true,
       time_limit_minutes: quizData.time_limit_minutes ?? 0,
       shuffle_questions: quizData.shuffle_questions ?? false,
+      target_classes: quizData.target_classes || [],
       created_at: new Date().toISOString(),
       questions: quizData.questions || [],
       submissions_count: 0,
