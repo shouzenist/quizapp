@@ -75,50 +75,38 @@ alter table public.options enable row level security;
 alter table public.submissions enable row level security;
 alter table public.submission_answers enable row level security;
 
--- Public / Anon bisa membaca kuis aktif
-create policy "Allow anon read active quizzes" on public.quizzes
-  for select using (is_active = true);
+-- Hapus policy lama jika ada
+drop policy if exists "Allow anon read active quizzes" on public.quizzes;
+drop policy if exists "Allow all operations for authenticated teachers" on public.quizzes;
+drop policy if exists "Allow anon read questions" on public.questions;
+drop policy if exists "Allow authenticated manage questions" on public.questions;
+drop policy if exists "Allow anon read options" on public.options;
+drop policy if exists "Allow authenticated manage options" on public.options;
+drop policy if exists "Allow public insert submissions" on public.submissions;
+drop policy if exists "Allow read submissions for quiz owner" on public.submissions;
+drop policy if exists "Allow public insert submission_answers" on public.submission_answers;
+drop policy if exists "Allow read submission_answers" on public.submission_answers;
+drop policy if exists "Allow all for quizzes" on public.quizzes;
+drop policy if exists "Allow all for questions" on public.questions;
+drop policy if exists "Allow all for options" on public.options;
+drop policy if exists "Allow all for submissions" on public.submissions;
+drop policy if exists "Allow all for submission_answers" on public.submission_answers;
 
--- Guru / Authenticated user bisa mengelola kuis miliknya
-create policy "Allow all operations for authenticated teachers" on public.quizzes
-  for all using (true) with check (true);
-
--- Public / Murid bisa membaca pertanyaan dari kuis
-create policy "Allow anon read questions" on public.questions
-  for select using (true);
-
-create policy "Allow authenticated manage questions" on public.questions
-  for all using (true) with check (true);
-
--- Public / Murid bisa membaca options
-create policy "Allow anon read options" on public.options
-  for select using (true);
-
-create policy "Allow authenticated manage options" on public.options
-  for all using (true) with check (true);
-
--- Murid bisa submit jawaban tanpa akun (Zero-friction)
-create policy "Allow public insert submissions" on public.submissions
-  for insert with check (true);
-
-create policy "Allow read submissions for quiz owner" on public.submissions
-  for select using (true);
-
-create policy "Allow public insert submission_answers" on public.submission_answers
-  for insert with check (true);
-
-create policy "Allow read submission_answers" on public.submission_answers
-  for select using (true);
+-- Akses penuh untuk aplikasi kuis (pengamanan portal guru dikontrol oleh Password PIN Guru)
+create policy "Allow all for quizzes" on public.quizzes for all using (true) with check (true);
+create policy "Allow all for questions" on public.questions for all using (true) with check (true);
+create policy "Allow all for options" on public.options for all using (true) with check (true);
+create policy "Allow all for submissions" on public.submissions for all using (true) with check (true);
+create policy "Allow all for submission_answers" on public.submission_answers for all using (true) with check (true);
 
 -- ========================================================
--- DATA CONTOH (SEEDED QUIZ)
+-- DATA CONTOH AWAL (SEEDED QUIZ)
 -- ========================================================
 do $$
 declare
   q_id uuid;
   quest_id uuid;
 begin
-  -- Buat kuis contoh jika belum ada
   if not exists (select 1 from public.quizzes where quiz_code = 'PINTAR') then
     insert into public.quizzes (id, title, description, subject, quiz_code, is_active, time_limit_minutes)
     values (
