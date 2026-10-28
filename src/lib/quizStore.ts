@@ -560,17 +560,61 @@ export async function getSubmissionsByQuizId(quizId: string): Promise<Submission
     try {
       const { data, error } = await supabase
         .from("submissions")
-        .select("*, answers:submission_answers(*)")
+        .select(`
+          *,
+          submission_answers (
+            id,
+            submission_id,
+            question_id,
+            selected_option_id,
+            is_correct,
+            option:options (
+              id,
+              option_text,
+              is_correct
+            )
+          )
+        `)
         .eq("quiz_id", quizId)
         .order("score", { ascending: false });
 
       if (!error && data) {
-        const processed = data.map((sub: any) => ({
-          ...sub,
-          answers: (sub.answers_data && Array.isArray(sub.answers_data) && sub.answers_data.length > 0)
-            ? sub.answers_data
-            : sub.answers,
-        }));
+        const processed = data.map((sub: any) => {
+          const rawSubAnswers = sub.submission_answers || sub.answers || [];
+
+          const mappedAnswers: StudentAnswer[] = rawSubAnswers.map((sa: any, saIdx: number) => ({
+            question_id: sa.question_id,
+            selected_option_id: sa.selected_option_id || "",
+            is_correct: sa.is_correct,
+            selected_option_text: sa.option?.option_text || sa.selected_option_text || "",
+            question_index: sa.question_index ?? saIdx,
+          }));
+
+          const hasValidAnswersData =
+            Array.isArray(sub.answers_data) &&
+            sub.answers_data.length > 0 &&
+            sub.answers_data.some((a: any) => Boolean(a.selected_option_id || a.selected_option_text));
+
+          const finalAnswers = hasValidAnswersData ? sub.answers_data : mappedAnswers;
+
+          // Pemulihan Nilai: Jika score di database tercatat 0 namun terdapat jawaban benar di submission_answers
+          let finalScore = sub.score;
+          let finalCorrect = sub.correct_answers;
+
+          const rawCorrectCount = rawSubAnswers.filter((a: any) => a.is_correct === true).length;
+          if (finalScore === 0 && rawCorrectCount > 0 && rawSubAnswers.length > 0) {
+            finalCorrect = rawCorrectCount;
+            finalScore = Math.round((rawCorrectCount / rawSubAnswers.length) * 100);
+          }
+
+          return {
+            ...sub,
+            score: finalScore,
+            correct_answers: finalCorrect,
+            answers: finalAnswers,
+            submission_answers: rawSubAnswers,
+          };
+        });
         return processed as Submission[];
       }
       console.error("Supabase getSubmissionsByQuizId error:", error);
@@ -667,66 +711,133 @@ export async function recalculateQuizSubmissions(quizId: string): Promise<{
     };
   }
 
+  // 3. Cache seluruh options dan questions dari Supabase untuk pencocokan teks opsi
+  const optionMap = new Map<string, { option_text: string; is_correct: boolean; question_id?: string }>();
+  const questionMap = new Map<string, { question_text: string; order_index?: number }>();
+
+  if (isSupabaseConfigured) {
+    try {
+      const { data: allOpts } = await supabase
+        .from("options")
+        .select("id, question_id, option_text, is_correct");
+      if (allOpts) {
+        for (const opt of allOpts) {
+          optionMap.set(opt.id, opt);
+        }
+      }
+
+      const { data: allQuests } = await supabase
+        .from("questions")
+        .select("id, question_text, order_index")
+        .eq("quiz_id", quizId);
+      if (allQuests) {
+        for (const q of allQuests) {
+          questionMap.set(q.id, q);
+        }
+      }
+    } catch (e) {
+      console.warn("Gagal mengambil referensi options/questions dari database:", e);
+    }
+  }
+
   const totalPossiblePoints = quiz.questions.reduce((sum, q) => sum + (q.points || 10), 0);
   const updatedSubs: Submission[] = [];
 
   for (const sub of currentSubs) {
-    let newScore = 0;
-    let newCorrect = 0;
-    const existingAnswers = sub.answers || sub.answers_data || [];
+    let calculatedPoints = 0;
+    let correctCount = 0;
+
+    const anySub = sub as any;
+    const dbAnswers: any[] = anySub.submission_answers || sub.answers || [];
 
     const reEvaluatedAnswers: StudentAnswer[] = quiz.questions.map((q, qIdx) => {
-      // Cari jawaban murid: cocokkan by question_id ATAU by urutan index soal
-      const ans =
-        existingAnswers.find((a) => a.question_id === q.id) ||
-        existingAnswers.find((a) => a.question_index === qIdx) ||
-        existingAnswers[qIdx];
+      // Cari jawaban murid untuk butir soal ini
+      // 1. Cocokkan ID soal langsung
+      let ans = dbAnswers.find((a) => a.question_id && a.question_id === q.id);
+
+      // 2. Cocokkan melalui teks soal jika ID soal berbeda
+      if (!ans) {
+        ans = dbAnswers.find((a) => {
+          if (!a.question_id) return false;
+          const qMeta = questionMap.get(a.question_id);
+          return qMeta && qMeta.question_text.trim().toLowerCase() === q.question_text.trim().toLowerCase();
+        });
+      }
+
+      // 3. Cocokkan melalui indeks urutan soal
+      if (!ans) {
+        ans = dbAnswers.find((a) => a.question_index !== undefined && a.question_index === qIdx);
+      }
+
+      // 4. Fallback ke posisi array
+      if (!ans && dbAnswers[qIdx]) {
+        ans = dbAnswers[qIdx];
+      }
 
       const currentCorrectOption = q.options.find((opt) => opt.is_correct);
 
       let isCorrect = false;
       let selectedOptionId = ans?.selected_option_id || "";
-      let selectedOptionText = ans?.selected_option_text || "";
+      let selectedOptionText = ans?.selected_option_text || ans?.option?.option_text || "";
       const selectedOptionIndex = ans?.selected_option_index;
 
-      if (ans && currentCorrectOption) {
-        // Cocokkan 1: Melalui ID Pilihan Jawaban
-        if (ans.selected_option_id && ans.selected_option_id === currentCorrectOption.id) {
+      // Ambil teks opsi dari optionMap jika belum ada
+      if (!selectedOptionText && selectedOptionId && optionMap.has(selectedOptionId)) {
+        selectedOptionText = optionMap.get(selectedOptionId)?.option_text || "";
+      }
+
+      let evaluated = false;
+
+      if (ans) {
+        // Cek A: Jika ID pilihan sama dengan kunci jawaban saat ini
+        if (currentCorrectOption && selectedOptionId && selectedOptionId === currentCorrectOption.id) {
           isCorrect = true;
+          evaluated = true;
         }
-        // Cocokkan 2: Melalui Teks Pilihan Jawaban
+        // Cek B: Jika teks opsi sama dengan teks kunci jawaban saat ini
         else if (
-          ans.selected_option_text &&
-          ans.selected_option_text.trim().toLowerCase() === currentCorrectOption.option_text.trim().toLowerCase()
+          currentCorrectOption &&
+          selectedOptionText &&
+          currentCorrectOption.option_text &&
+          selectedOptionText.trim().toLowerCase() === currentCorrectOption.option_text.trim().toLowerCase()
         ) {
           isCorrect = true;
           selectedOptionId = currentCorrectOption.id;
+          evaluated = true;
         }
-        // Cocokkan 3: Cari option pada soal saat ini yang ID-nya sama
-        else if (ans.selected_option_id) {
-          const matchedOpt = q.options.find((opt) => opt.id === ans.selected_option_id);
-          if (matchedOpt && matchedOpt.is_correct) {
-            isCorrect = true;
+        // Cek C: Cocokkan selectedOptionId ke salah satu opsi di q.options
+        else if (selectedOptionId) {
+          const matchedOpt = q.options.find((opt) => opt.id === selectedOptionId);
+          if (matchedOpt) {
+            isCorrect = matchedOpt.is_correct;
+            selectedOptionText = matchedOpt.option_text;
+            evaluated = true;
           }
         }
-        // Cocokkan 4: Melalui Nomor Urut Pilihan (misal opsi ke-2)
-        else if (
-          ans.selected_option_index !== undefined &&
-          q.options[ans.selected_option_index]?.is_correct
-        ) {
-          isCorrect = true;
+        // Cek D: Cocokkan melalui nomor urut indeks opsi
+        else if (selectedOptionIndex !== undefined && q.options[selectedOptionIndex]) {
+          isCorrect = q.options[selectedOptionIndex].is_correct;
+          selectedOptionText = q.options[selectedOptionIndex].option_text;
+          selectedOptionId = q.options[selectedOptionIndex].id;
+          evaluated = true;
+        }
+
+        // Cek E: Jika tidak dapat dievaluasi terhadap opsi baru, gunakan status is_correct lama
+        if (!evaluated && ans.is_correct !== undefined) {
+          isCorrect = Boolean(ans.is_correct);
+          evaluated = true;
         }
       }
 
       if (isCorrect) {
-        newCorrect += 1;
-        newScore += q.points || 10;
+        correctCount += 1;
+        calculatedPoints += q.points || 10;
       }
 
-      // Pastikan teks jawaban murid terisi jika belum ada
+      // Pastikan selectedOptionText terisi jika ada ID
       if (!selectedOptionText && selectedOptionId) {
-        const foundOpt = q.options.find((opt) => opt.id === selectedOptionId);
-        if (foundOpt) selectedOptionText = foundOpt.option_text;
+        const found = q.options.find((opt) => opt.id === selectedOptionId);
+        if (found) selectedOptionText = found.option_text;
       }
 
       return {
@@ -740,14 +851,28 @@ export async function recalculateQuizSubmissions(quizId: string): Promise<{
       };
     });
 
-    const normalizedScore = totalPossiblePoints > 0
-      ? Math.round((newScore / totalPossiblePoints) * 100)
-      : 0;
+    // PENGAMANAN SKOR:
+    let finalScore = 0;
+    let finalCorrect = correctCount;
+
+    if (totalPossiblePoints > 0 && calculatedPoints > 0) {
+      finalScore = Math.round((calculatedPoints / totalPossiblePoints) * 100);
+    } else {
+      // Cek apakah ada jawaban benar tercatat di raw dbAnswers
+      const rawCorrect = dbAnswers.filter((a) => a.is_correct === true).length;
+      if (rawCorrect > 0) {
+        finalCorrect = rawCorrect;
+        finalScore = Math.round((rawCorrect / quiz.questions.length) * 100);
+      } else if (sub.score > 0) {
+        finalScore = sub.score;
+        finalCorrect = sub.correct_answers || 0;
+      }
+    }
 
     const updatedSub: Submission = {
       ...sub,
-      score: normalizedScore,
-      correct_answers: newCorrect,
+      score: finalScore,
+      correct_answers: finalCorrect,
       total_questions: quiz.questions.length,
       answers: reEvaluatedAnswers,
       answers_data: reEvaluatedAnswers,
@@ -755,20 +880,19 @@ export async function recalculateQuizSubmissions(quizId: string): Promise<{
 
     updatedSubs.push(updatedSub);
 
-    // Update di Supabase jika terkoneksi
+    // Update di Supabase
     if (isSupabaseConfigured && isValidUuid(sub.id)) {
       try {
         await supabase
           .from("submissions")
           .update({
-            score: normalizedScore,
-            correct_answers: newCorrect,
+            score: finalScore,
+            correct_answers: finalCorrect,
             total_questions: quiz.questions.length,
             answers_data: reEvaluatedAnswers,
           })
           .eq("id", sub.id);
 
-        // Update juga ke submission_answers
         for (const ans of reEvaluatedAnswers) {
           if (isValidUuid(ans.question_id)) {
             await supabase

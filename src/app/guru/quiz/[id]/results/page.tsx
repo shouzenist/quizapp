@@ -815,7 +815,11 @@ function QuizResultsContent() {
 
                   const answerDisplay = selectedOpt
                     ? selectedOpt.option_text
-                    : studentAns?.selected_option_text || "(Tidak dijawab / Kosong)";
+                    : studentAns?.selected_option_text
+                    ? studentAns.selected_option_text
+                    : isCorrect
+                    ? "(Jawaban Benar Tercatat di Database)"
+                    : "(Tidak dijawab / Kosong)";
 
                   return (
                     <div
