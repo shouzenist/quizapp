@@ -34,13 +34,13 @@ export default function Navbar() {
           className="flex items-center gap-3 group transition-transform active:scale-95"
           onClick={() => sounds.playSelect()}
         >
-          <div className="relative h-8 md:h-9 flex items-center justify-center transition-transform group-hover:scale-105">
+          <div className="relative h-10 md:h-12 flex items-center justify-center transition-transform group-hover:scale-105">
             <Image
               src="/logo2.png"
               alt="3G Quiz"
-              width={160}
-              height={80}
-              className="h-8 md:h-9 w-auto object-contain drop-shadow-xs"
+              width={200}
+              height={100}
+              className="h-10 md:h-12 w-auto object-contain drop-shadow-xs"
               priority
             />
           </div>
