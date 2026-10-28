@@ -41,10 +41,11 @@ export default function RootLayout({
         <main className="flex-1 flex flex-col">{children}</main>
         <footer className="border-t border-slate-200 bg-white/70 backdrop-blur-md py-6 text-center text-sm text-slate-500">
           <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="flex items-center gap-2">
-              <Image src="/logo.png" alt="3G Logo" width={28} height={18} className="h-4 w-auto object-contain inline-block" />
-              <span className="font-semibold text-blue-700">3G Quiz</span> — SMP Negeri 3 Godean
-            </p>
+            <div className="flex items-center gap-2.5">
+              <Image src="/logo2.png" alt="3G Quiz" width={100} height={50} className="h-5 w-auto object-contain inline-block" />
+              <span className="text-slate-400">—</span>
+              <span className="font-medium text-slate-600">SMP Negeri 3 Godean</span>
+            </div>
             <p className="text-xs text-slate-400">
               Mendukung Vercel & Supabase PostgreSQL
             </p>
