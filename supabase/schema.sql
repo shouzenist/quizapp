@@ -68,6 +68,13 @@ create table if not exists public.submission_answers (
   is_correct boolean default false not null
 );
 
+-- 6. TABEL PENGATURAN APLIKASI (Kredensial Guru & Konfigurasi)
+create table if not exists public.app_settings (
+  key text primary key,
+  value text not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
 -- INDEXES UNTUK PERFORMA TINGGI
 create index if not exists idx_quizzes_quiz_code on public.quizzes(quiz_code);
 create index if not exists idx_questions_quiz_id on public.questions(quiz_id);
@@ -80,6 +87,7 @@ alter table public.questions enable row level security;
 alter table public.options enable row level security;
 alter table public.submissions enable row level security;
 alter table public.submission_answers enable row level security;
+alter table public.app_settings enable row level security;
 
 -- Hapus policy lama jika ada
 drop policy if exists "Allow anon read active quizzes" on public.quizzes;
@@ -97,6 +105,7 @@ drop policy if exists "Allow all for questions" on public.questions;
 drop policy if exists "Allow all for options" on public.options;
 drop policy if exists "Allow all for submissions" on public.submissions;
 drop policy if exists "Allow all for submission_answers" on public.submission_answers;
+drop policy if exists "Allow all for app_settings" on public.app_settings;
 
 -- Akses penuh untuk aplikasi kuis (pengamanan portal guru dikontrol oleh Password PIN Guru)
 create policy "Allow all for quizzes" on public.quizzes for all using (true) with check (true);
@@ -104,6 +113,12 @@ create policy "Allow all for questions" on public.questions for all using (true)
 create policy "Allow all for options" on public.options for all using (true) with check (true);
 create policy "Allow all for submissions" on public.submissions for all using (true) with check (true);
 create policy "Allow all for submission_answers" on public.submission_answers for all using (true) with check (true);
+create policy "Allow all for app_settings" on public.app_settings for all using (true) with check (true);
+
+-- Inisialisasi password default guru jika belum ada
+insert into public.app_settings (key, value)
+values ('teacher_password', 'guru123')
+on conflict (key) do nothing;
 
 -- ========================================================
 -- DATA CONTOH AWAL (SEEDED QUIZ)

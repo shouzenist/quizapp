@@ -14,13 +14,14 @@ import {
   Settings,
   LogOut,
   X,
+  Loader2,
 } from "lucide-react";
 import {
   isTeacherLoggedIn,
   loginTeacher,
   logoutTeacher,
   changeTeacherPassword,
-  getTeacherPassword,
+  syncTeacherPassword,
 } from "@/lib/teacherAuth";
 import { sounds } from "@/lib/sound";
 
@@ -40,22 +41,33 @@ export default function TeacherAuthGuard({
   const [newPassword, setNewPassword] = useState("");
   const [settingsMsg, setSettingsMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isSavingPass, setIsSavingPass] = useState(false);
+
   useEffect(() => {
     setIsAuthenticated(isTeacherLoggedIn());
+    syncTeacherPassword();
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+    setIsLoggingIn(true);
 
-    const success = loginTeacher(password);
-    if (success) {
-      sounds.playCorrect();
-      setIsAuthenticated(true);
-      setPassword("");
-    } else {
-      sounds.playWrong();
-      setErrorMsg("Password salah! Silakan periksa kembali atau gunakan default: guru123");
+    try {
+      const success = await loginTeacher(password);
+      if (success) {
+        sounds.playCorrect();
+        setIsAuthenticated(true);
+        setPassword("");
+      } else {
+        sounds.playWrong();
+        setErrorMsg("Password salah! Silakan periksa kembali atau gunakan default: guru123");
+      }
+    } catch {
+      setErrorMsg("Terjadi kesalahan saat memeriksa password.");
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -65,20 +77,27 @@ export default function TeacherAuthGuard({
     setIsAuthenticated(false);
   };
 
-  const handleChangePass = (e: React.FormEvent) => {
+  const handleChangePass = async (e: React.FormEvent) => {
     e.preventDefault();
     setSettingsMsg(null);
+    setIsSavingPass(true);
 
-    const res = changeTeacherPassword(oldPassword, newPassword);
-    if (res.success) {
-      sounds.playCorrect();
-      setSettingsMsg({ type: "success", text: res.message });
-      setOldPassword("");
-      setNewPassword("");
-      setTimeout(() => setShowSettingsModal(false), 1500);
-    } else {
-      sounds.playWrong();
-      setSettingsMsg({ type: "error", text: res.message });
+    try {
+      const res = await changeTeacherPassword(oldPassword, newPassword);
+      if (res.success) {
+        sounds.playCorrect();
+        setSettingsMsg({ type: "success", text: res.message });
+        setOldPassword("");
+        setNewPassword("");
+        setTimeout(() => setShowSettingsModal(false), 2000);
+      } else {
+        sounds.playWrong();
+        setSettingsMsg({ type: "error", text: res.message });
+      }
+    } catch {
+      setSettingsMsg({ type: "error", text: "Terjadi kesalahan saat menyimpan password." });
+    } finally {
+      setIsSavingPass(false);
     }
   };
 
@@ -154,10 +173,20 @@ export default function TeacherAuthGuard({
 
             <button
               type="submit"
-              className="w-full py-3.5 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-md shadow-indigo-600/25 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm"
+              disabled={isLoggingIn}
+              className="w-full py-3.5 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-md shadow-indigo-600/25 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <KeyRound className="w-4 h-4" />
-              <span>Buka Portal Guru</span>
+              {isLoggingIn ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Memverifikasi...</span>
+                </>
+              ) : (
+                <>
+                  <KeyRound className="w-4 h-4" />
+                  <span>Buka Portal Guru</span>
+                </>
+              )}
             </button>
           </form>
 
@@ -291,9 +320,17 @@ export default function TeacherAuthGuard({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm"
+                  disabled={isSavingPass}
+                  className="flex-1 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Simpan Password
+                  {isSavingPass ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Menyimpan...</span>
+                    </>
+                  ) : (
+                    <span>Simpan Password</span>
+                  )}
                 </button>
               </div>
             </form>
