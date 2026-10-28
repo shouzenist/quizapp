@@ -75,7 +75,7 @@ export default function Home() {
                 <Zap className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Gabung Quis</h2>
+                <h2 className="text-lg font-bold text-slate-900">Gabung Quiz</h2>
                 <p className="text-xs text-slate-500">Masukkan kode 6 digit dari gurumu</p>
               </div>
             </div>
