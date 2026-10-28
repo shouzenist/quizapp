@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Sparkles, BookOpen, Volume2, VolumeX, Database, GraduationCap, Lock } from "lucide-react";
+import { BookOpen, Volume2, VolumeX, Database, GraduationCap, Lock } from "lucide-react";
 import { sounds } from "@/lib/sound";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
@@ -30,11 +31,18 @@ export default function Navbar() {
         {/* Brand */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 group transition-transform active:scale-95"
+          className="flex items-center gap-3 group transition-transform active:scale-95"
           onClick={() => sounds.playSelect()}
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-900 via-blue-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-blue-600/20 group-hover:shadow-blue-600/40 transition-shadow">
-            <Sparkles className="w-5 h-5" />
+          <div className="relative h-9 w-12 flex items-center justify-center transition-transform group-hover:scale-105">
+            <Image
+              src="/logo.png"
+              alt="Logo 3G Quiz"
+              width={64}
+              height={42}
+              className="h-full w-auto object-contain drop-shadow-xs"
+              priority
+            />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xl font-extrabold bg-gradient-to-r from-blue-950 via-blue-700 to-sky-500 bg-clip-text text-transparent tracking-tight">

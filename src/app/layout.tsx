@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
+import Image from "next/image";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
@@ -17,6 +18,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "3G Quiz - SMP Negeri 3 Godean",
   description: "Platform kuis interaktif modern SMP Negeri 3 Godean. Murid cukup masukkan nama & kelas tanpa perlu registrasi.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -37,6 +42,7 @@ export default function RootLayout({
         <footer className="border-t border-slate-200 bg-white/70 backdrop-blur-md py-6 text-center text-sm text-slate-500">
           <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="flex items-center gap-2">
+              <Image src="/logo.png" alt="3G Logo" width={28} height={18} className="h-4 w-auto object-contain inline-block" />
               <span className="font-semibold text-blue-700">3G Quiz</span> — SMP Negeri 3 Godean
             </p>
             <p className="text-xs text-slate-400">
