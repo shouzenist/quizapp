@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import {
   Sparkles,
   ArrowRight,
@@ -45,19 +44,6 @@ export default function Home() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-12 md:py-16 w-full flex-1 flex flex-col items-center">
-        {/* Official 3G Logo Emblem */}
-        <div className="relative mb-5 flex items-center justify-center">
-          <div className="relative p-2.5 rounded-3xl bg-white/90 border border-slate-200/90 shadow-md shadow-blue-900/5 backdrop-blur-md hover:scale-105 transition-transform duration-300">
-            <Image
-              src="/logo.png"
-              alt="Logo 3G SMP Negeri 3 Godean"
-              width={160}
-              height={107}
-              className="h-12 sm:h-14 w-auto object-contain"
-              priority
-            />
-          </div>
-        </div>
 
         {/* Hero Badge */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-900 text-xs md:text-sm font-semibold mb-6 shadow-sm">

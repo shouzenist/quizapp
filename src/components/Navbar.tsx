@@ -34,24 +34,19 @@ export default function Navbar() {
           className="flex items-center gap-3 group transition-transform active:scale-95"
           onClick={() => sounds.playSelect()}
         >
-          <div className="relative h-9 w-12 flex items-center justify-center transition-transform group-hover:scale-105">
+          <div className="relative h-8 md:h-9 flex items-center justify-center transition-transform group-hover:scale-105">
             <Image
-              src="/logo.png"
-              alt="Logo 3G Quiz"
-              width={64}
-              height={42}
-              className="h-full w-auto object-contain drop-shadow-xs"
+              src="/logo2.png"
+              alt="3G Quiz"
+              width={160}
+              height={80}
+              className="h-8 md:h-9 w-auto object-contain drop-shadow-xs"
               priority
             />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-extrabold bg-gradient-to-r from-blue-950 via-blue-700 to-sky-500 bg-clip-text text-transparent tracking-tight">
-              3G Quiz
-            </span>
-            <span className="hidden sm:inline-block px-2.5 py-0.5 text-[11px] font-bold tracking-wide rounded-full bg-blue-50 text-blue-800 border border-blue-200/80">
-              SMP Negeri 3 Godean
-            </span>
-          </div>
+          <span className="hidden sm:inline-block px-2.5 py-0.5 text-[11px] font-bold tracking-wide rounded-full bg-blue-50 text-blue-800 border border-blue-200/80">
+            SMP Negeri 3 Godean
+          </span>
         </Link>
 
         {/* Navigation Actions */}
