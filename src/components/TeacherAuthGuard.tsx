@@ -105,7 +105,7 @@ export default function TeacherAuthGuard({
   if (isAuthenticated === null) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3" />
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-slate-500 text-sm">Memeriksa izin akses...</p>
       </div>
     );
@@ -117,7 +117,7 @@ export default function TeacherAuthGuard({
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 w-full">
         <div className="w-full max-w-md glass-card rounded-3xl p-6 md:p-8 shadow-xl border border-slate-200 bg-white text-center">
           {/* Lock Icon */}
-          <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center mx-auto mb-4 shadow-sm">
             <Lock className="w-8 h-8" />
           </div>
 
@@ -144,7 +144,7 @@ export default function TeacherAuthGuard({
                     setErrorMsg("");
                   }}
                   placeholder="Masukkan password guru..."
-                  className="w-full pl-4 pr-11 py-3 text-sm rounded-xl border border-slate-200 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all font-medium text-slate-800"
+                  className="w-full pl-4 pr-11 py-3 text-sm rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all font-medium text-slate-800"
                 />
                 <button
                   type="button"
@@ -174,7 +174,7 @@ export default function TeacherAuthGuard({
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="w-full py-3.5 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-md shadow-indigo-600/25 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full py-3.5 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-blue-900 via-blue-700 to-sky-500 hover:from-blue-950 hover:via-blue-800 hover:to-sky-600 shadow-md shadow-blue-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isLoggingIn ? (
                 <>
@@ -194,7 +194,7 @@ export default function TeacherAuthGuard({
             <Link
               href="/"
               onClick={() => sounds.playSelect()}
-              className="text-xs text-slate-500 hover:text-indigo-600 font-semibold inline-flex items-center gap-1.5 transition-colors"
+              className="text-xs text-slate-500 hover:text-blue-700 font-semibold inline-flex items-center gap-1.5 transition-colors"
             >
               <GraduationCap className="w-3.5 h-3.5" />
               <span>Kembali ke Halaman Murid</span>
@@ -209,11 +209,11 @@ export default function TeacherAuthGuard({
   return (
     <div className="flex-1 flex flex-col">
       {/* Teacher Session Subheader */}
-      <div className="bg-indigo-900 text-white text-xs py-1.5 px-4">
+      <div className="bg-blue-950 text-white text-xs py-1.5 px-4 border-b border-blue-900">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-medium">Sesi Guru Aktif</span>
+            <span className="font-medium text-blue-100">Sesi Guru Aktif</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -223,13 +223,13 @@ export default function TeacherAuthGuard({
                 setShowSettingsModal(true);
                 setSettingsMsg(null);
               }}
-              className="hover:text-indigo-200 transition-colors flex items-center gap-1 cursor-pointer font-medium"
+              className="hover:text-sky-300 transition-colors flex items-center gap-1 cursor-pointer font-medium text-blue-200"
             >
               <Settings className="w-3.5 h-3.5" />
               <span>Ubah Password</span>
             </button>
 
-            <span className="text-indigo-400">•</span>
+            <span className="text-blue-400">•</span>
 
             <button
               onClick={handleLogout}
@@ -256,7 +256,7 @@ export default function TeacherAuthGuard({
             </button>
 
             <h3 className="text-lg font-bold text-slate-900 mb-1 flex items-center gap-2">
-              <KeyRound className="w-5 h-5 text-indigo-600" />
+              <KeyRound className="w-5 h-5 text-blue-700" />
               <span>Ubah Password Guru</span>
             </h3>
             <p className="text-xs text-slate-500 mb-4">
@@ -291,7 +291,7 @@ export default function TeacherAuthGuard({
                   value={oldPassword}
                   onChange={(e) => setOldPassword(e.target.value)}
                   placeholder="Masukkan password saat ini..."
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-blue-600"
                 />
               </div>
 
@@ -306,7 +306,7 @@ export default function TeacherAuthGuard({
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Masukkan password baru..."
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-600"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-blue-600"
                 />
               </div>
 
@@ -321,7 +321,7 @@ export default function TeacherAuthGuard({
                 <button
                   type="submit"
                   disabled={isSavingPass}
-                  className="flex-1 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="flex-1 py-2 text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-xl shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isSavingPass ? (
                     <>

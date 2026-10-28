@@ -132,7 +132,7 @@ export default function ImageUploader({
           <button
             type="button"
             onClick={() => setShowUrlInput(!showUrlInput)}
-            className="text-[11px] text-indigo-600 hover:text-indigo-700 font-semibold flex items-center gap-1 cursor-pointer"
+            className="text-[11px] text-blue-700 hover:text-blue-800 font-semibold flex items-center gap-1 cursor-pointer"
           >
             <Link2 className="w-3 h-3" />
             <span>{showUrlInput ? "Tutup Input Link" : "Input Link URL"}</span>
@@ -148,12 +148,12 @@ export default function ImageUploader({
             value={customUrl}
             onChange={(e) => setCustomUrl(e.target.value)}
             placeholder="Tempelkan URL gambar (https://...)"
-            className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:border-indigo-600 bg-white"
+            className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:border-blue-600 bg-white"
           />
           <button
             type="button"
             onClick={handleApplyUrl}
-            className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors"
           >
             Pasang
           </button>
@@ -186,7 +186,7 @@ export default function ImageUploader({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-indigo-600 hover:text-indigo-700 font-semibold cursor-pointer underline"
+              className="text-blue-700 hover:text-blue-800 font-semibold cursor-pointer underline"
             >
               Ganti Gambar
             </button>
@@ -202,19 +202,19 @@ export default function ImageUploader({
           onPaste={handlePaste}
           tabIndex={0}
           onClick={() => fileInputRef.current?.click()}
-          className={`p-4 md:p-5 rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left focus:outline-none focus:ring-2 focus:ring-indigo-300 ${
+          className={`p-4 md:p-5 rounded-2xl border-2 border-dashed transition-all cursor-pointer flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left focus:outline-none focus:ring-2 focus:ring-blue-300 ${
             isDragging
-              ? "border-indigo-600 bg-indigo-50/60"
-              : "border-slate-200 hover:border-indigo-300 hover:bg-slate-50/60 bg-slate-50/30"
+              ? "border-blue-600 bg-blue-50/60"
+              : "border-slate-200 hover:border-blue-300 hover:bg-slate-50/60 bg-slate-50/30"
           }`}
         >
-          <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0 border border-indigo-100">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center flex-shrink-0 border border-blue-200">
             <ImageIcon className="w-6 h-6" />
           </div>
 
           <div className="flex-1 space-y-1">
             <p className="text-xs md:text-sm font-bold text-slate-800">
-              <span className="text-indigo-600 underline">Klik untuk Upload</span>, seret file ke sini, atau tekan{" "}
+              <span className="text-blue-700 underline">Klik untuk Upload</span>, seret file ke sini, atau tekan{" "}
               <kbd className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-mono text-[10px] font-bold">
                 Ctrl + V
               </kbd>

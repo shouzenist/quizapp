@@ -45,7 +45,7 @@ export default function QRCodeModal({
           <X className="w-5 h-5" />
         </button>
 
-        <div className="inline-flex p-3 rounded-2xl bg-indigo-50 text-indigo-600 mb-3">
+        <div className="inline-flex p-3 rounded-2xl bg-blue-50 text-blue-700 mb-3">
           <QrCode className="w-6 h-6" />
         </div>
 
@@ -59,7 +59,7 @@ export default function QRCodeModal({
           <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">
             Kode Masuk Kuis
           </p>
-          <div className="text-4xl font-black font-mono tracking-widest text-indigo-700">
+          <div className="text-4xl font-black font-mono tracking-widest text-blue-800">
             {quizCode}
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function QRCodeModal({
         {/* Copy Link Button */}
         <button
           onClick={handleCopy}
-          className="w-full py-3 px-4 rounded-xl border border-slate-200 hover:border-indigo-600 text-slate-700 hover:text-indigo-600 font-semibold text-xs md:text-sm flex items-center justify-center gap-2 transition-all bg-slate-50 hover:bg-indigo-50/50"
+          className="w-full py-3 px-4 rounded-xl border border-slate-200 hover:border-blue-600 text-slate-700 hover:text-blue-700 font-semibold text-xs md:text-sm flex items-center justify-center gap-2 transition-all bg-slate-50 hover:bg-blue-50/50"
         >
           {copied ? (
             <>

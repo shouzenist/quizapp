@@ -242,7 +242,7 @@ function PlayQuizContent() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
         <p className="text-slate-600 font-medium">Memuat data kuis...</p>
       </div>
     );
@@ -261,7 +261,7 @@ function PlayQuizContent() {
         </p>
         <Link
           href="/"
-          className="px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors shadow-md"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-900 via-blue-700 to-sky-500 text-white font-semibold hover:from-blue-950 hover:via-blue-800 hover:to-sky-600 transition-all shadow-md"
         >
           Kembali ke Beranda
         </Link>
@@ -275,7 +275,7 @@ function PlayQuizContent() {
       <div className="max-w-2xl mx-auto px-4 py-8 md:py-12 w-full flex-1 flex flex-col justify-center">
         <div className="glass-card rounded-3xl p-6 md:p-10 shadow-xl border border-slate-200/80 bg-white">
           <div className="flex items-center justify-between gap-4 mb-4">
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
               {quiz.subject || "Umum"}
             </span>
             <span className="font-mono text-xs font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-md">
@@ -295,7 +295,7 @@ function PlayQuizContent() {
 
           <div className="grid grid-cols-2 gap-3 my-6 p-4 rounded-2xl bg-slate-50 border border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
@@ -328,7 +328,7 @@ function PlayQuizContent() {
                 value={studentName}
                 onChange={(e) => setStudentName(e.target.value)}
                 placeholder="Contoh: Muhammad Rizky Pratama"
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all text-slate-800 font-medium"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all text-slate-800 font-medium"
               />
             </div>
 
@@ -352,7 +352,7 @@ function PlayQuizContent() {
                           }}
                           className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                             isSelected
-                              ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/25 ring-2 ring-indigo-200"
+                              ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25 ring-2 ring-blue-200"
                               : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
                           }`}
                         >
@@ -372,7 +372,7 @@ function PlayQuizContent() {
                           setStudentClass("");
                         }
                       }}
-                      className="text-[11px] text-slate-500 hover:text-indigo-600 font-medium cursor-pointer underline mb-1.5 inline-block"
+                      className="text-[11px] text-slate-500 hover:text-blue-700 font-medium cursor-pointer underline mb-1.5 inline-block"
                     >
                       Bukan dari kelas di atas? Ketik manual di sini
                     </button>
@@ -382,7 +382,7 @@ function PlayQuizContent() {
                         value={studentClass}
                         onChange={(e) => setStudentClass(e.target.value)}
                         placeholder="Ketik nama kelas Anda..."
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all text-slate-800 text-sm font-medium bg-slate-50/50"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all text-slate-800 text-sm font-medium bg-slate-50/50"
                       />
                     )}
                   </div>
@@ -395,7 +395,7 @@ function PlayQuizContent() {
                     value={studentClass}
                     onChange={(e) => setStudentClass(e.target.value)}
                     placeholder="Contoh: 7A, 8B, atau 10 IPA 1"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all text-slate-800 font-medium"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all text-slate-800 font-medium"
                   />
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {["7A", "7B", "8A", "8B", "9A", "10 IPA 1"].map((c) => (
@@ -408,8 +408,8 @@ function PlayQuizContent() {
                         }}
                         className={`px-2 py-0.5 rounded-md text-xs border transition-colors cursor-pointer ${
                           studentClass === c
-                            ? "bg-indigo-600 text-white border-indigo-600"
-                            : "bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 border-slate-200"
+                            ? "bg-blue-600 text-white border-blue-600"
+                            : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700 border-slate-200"
                         }`}
                       >
                         {c}
@@ -426,7 +426,7 @@ function PlayQuizContent() {
 
             <button
               type="submit"
-              className="w-full py-4 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-600/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-base cursor-pointer mt-4"
+              className="w-full py-4 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-blue-900 via-blue-700 to-sky-500 hover:from-blue-950 hover:via-blue-800 hover:to-sky-600 shadow-lg shadow-blue-900/25 active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-base cursor-pointer mt-4"
             >
               <span>Mulai Kerjakan Kuis Sekarang</span>
               <ArrowRight className="w-5 h-5" />
@@ -466,7 +466,7 @@ function PlayQuizContent() {
 
           <div className="flex items-center justify-between gap-4 mb-3">
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm md:text-base text-indigo-700">
+              <span className="font-extrabold text-sm md:text-base text-blue-800">
                 Soal {currentQuestionIndex + 1}
               </span>
               <span className="text-xs text-slate-400 font-medium">
@@ -490,7 +490,7 @@ function PlayQuizContent() {
 
           <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden mb-6">
             <div
-              className="bg-gradient-to-r from-indigo-500 to-violet-600 h-full rounded-full transition-all duration-300 ease-out"
+              className="bg-gradient-to-r from-blue-900 via-blue-600 to-sky-400 h-full rounded-full transition-all duration-300 ease-out"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -500,7 +500,7 @@ function PlayQuizContent() {
           <div className="glass-card rounded-3xl p-6 md:p-8 shadow-lg border border-slate-200 bg-white my-auto">
             <div className="flex items-center justify-between text-xs text-slate-400 font-medium mb-4">
               <span>{quiz.title}</span>
-              <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md font-semibold">
+              <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-semibold">
                 {currentQuestion.points || 10} Poin
               </span>
             </div>
@@ -537,14 +537,14 @@ function PlayQuizContent() {
                     onClick={() => handleSelectOption(currentQuestion.id, option.id)}
                     className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 cursor-pointer group ${
                       isSelected
-                        ? "border-indigo-600 bg-indigo-50/70 shadow-sm"
+                        ? "border-blue-600 bg-blue-50/70 shadow-sm"
                         : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 bg-white"
                     }`}
                   >
                     <div
                       className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center flex-shrink-0 transition-colors ${
                         isSelected
-                          ? "bg-indigo-600 text-white"
+                          ? "bg-blue-600 text-white"
                           : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
                       }`}
                     >
@@ -553,14 +553,14 @@ function PlayQuizContent() {
 
                     <span
                       className={`flex-1 text-sm md:text-base font-medium leading-snug ${
-                        isSelected ? "text-indigo-950 font-bold" : "text-slate-800"
+                        isSelected ? "text-blue-950 font-bold" : "text-slate-800"
                       }`}
                     >
                       {option.option_text}
                     </span>
 
                     {isSelected && (
-                      <CheckCircle2 className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0" />
                     )}
                   </button>
                 );
@@ -604,7 +604,7 @@ function PlayQuizContent() {
                 sounds.playSelect();
                 setCurrentQuestionIndex((prev) => prev + 1);
               }}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs md:text-sm shadow-md shadow-indigo-600/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-900 via-blue-700 to-sky-500 hover:from-blue-950 hover:via-blue-800 hover:to-sky-600 text-white font-semibold text-xs md:text-sm shadow-md shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <span>Selanjutnya</span>
               <ArrowRight className="w-4 h-4" />
@@ -630,14 +630,14 @@ function PlayQuizContent() {
           Terima kasih <strong className="text-slate-800">{studentName}</strong> ({studentClass}) sudah mengerjakan dengan baik.
         </p>
 
-        <div className="my-6 p-6 rounded-3xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 flex flex-col items-center">
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-500 mb-1">
+        <div className="my-6 p-6 rounded-3xl bg-gradient-to-br from-blue-50 to-sky-50 border border-blue-100 flex flex-col items-center">
+          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1">
             Nilai Akhir Kamu
           </span>
-          <div className="text-5xl md:text-6xl font-black text-indigo-700 font-mono tracking-tight">
+          <div className="text-5xl md:text-6xl font-black text-blue-800 font-mono tracking-tight">
             {finalScore}
           </div>
-          <p className="mt-2 text-xs md:text-sm font-semibold text-indigo-900">
+          <p className="mt-2 text-xs md:text-sm font-semibold text-blue-900">
             {finalScore >= 80
               ? "🌟 Luar Biasa! Hasil yang sangat membanggakan!"
               : finalScore >= 60
@@ -656,7 +656,7 @@ function PlayQuizContent() {
 
           <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
             <span className="text-[11px] text-slate-400 block font-medium">Akurasi</span>
-            <span className="text-lg font-bold text-indigo-600">
+            <span className="text-lg font-bold text-blue-700">
               {questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0}%
             </span>
           </div>
@@ -672,7 +672,7 @@ function PlayQuizContent() {
         {quiz.show_answer_review !== false ? (
           <div className="text-left mb-8 border-t border-slate-100 pt-6">
             <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-indigo-600" />
+              <CheckCircle2 className="w-4 h-4 text-blue-700" />
               <span>Reviu Jawaban Soal</span>
             </h3>
 
@@ -755,7 +755,7 @@ function PlayQuizContent() {
           <Link
             href="/"
             onClick={() => sounds.playSelect()}
-            className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs md:text-sm shadow-md transition-colors flex items-center justify-center gap-2"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-900 via-blue-700 to-sky-500 hover:from-blue-950 hover:via-blue-800 hover:to-sky-600 text-white font-bold text-xs md:text-sm shadow-md transition-colors flex items-center justify-center gap-2"
           >
             <span>Kembali ke Halaman Utama</span>
             <ArrowRight className="w-4 h-4" />
@@ -771,7 +771,7 @@ export default function PlayQuizPage() {
     <Suspense
       fallback={
         <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3" />
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
           <p className="text-slate-500 text-sm">Menyiapkan kuis...</p>
         </div>
       }

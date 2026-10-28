@@ -246,7 +246,7 @@ function QuizResultsContent() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3" />
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-slate-500 text-sm">Memuat rekap hasil kuis...</p>
       </div>
     );
@@ -259,7 +259,7 @@ function QuizResultsContent() {
         <Link
           href="/guru"
           onClick={() => sounds.playSelect()}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-700 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Kembali ke Dashboard Guru</span>
@@ -272,7 +272,7 @@ function QuizResultsContent() {
             onClick={handleRecalculate}
             disabled={isResyncing}
             title="Hitung ulang seluruh nilai murid berdasarkan kunci jawaban kuis terbaru"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
           >
             <RefreshCw className={`w-4 h-4 ${isResyncing ? "animate-spin" : ""}`} />
             <span>{isResyncing ? "Menyinkronkan..." : "Sinkronkan Ulang Nilai"}</span>
@@ -356,7 +356,7 @@ function QuizResultsContent() {
       {/* Quiz Header Title */}
       <div className="p-6 md:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm mb-6">
         <div className="flex flex-wrap items-center gap-2 mb-2">
-          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
             {quiz?.subject || "Umum"}
           </span>
           <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
@@ -387,7 +387,7 @@ function QuizResultsContent() {
           <p className="text-xs font-semibold uppercase text-slate-400 mb-1">
             Rata-rata Nilai
           </p>
-          <div className="text-3xl font-black text-indigo-600 font-mono">
+          <div className="text-3xl font-black text-blue-700 font-mono">
             {averageScore}
           </div>
           <p className="text-[11px] text-slate-400 mt-1">Dari skala 100</p>
@@ -424,7 +424,7 @@ function QuizResultsContent() {
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
             placeholder="Cari nama murid..."
-            className="w-full pl-9 pr-4 py-2 text-xs md:text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
+            className="w-full pl-9 pr-4 py-2 text-xs md:text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
           />
         </div>
 
@@ -436,7 +436,7 @@ function QuizResultsContent() {
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="w-full px-2.5 py-2 text-xs md:text-sm rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-indigo-600 font-medium text-slate-700"
+              className="w-full px-2.5 py-2 text-xs md:text-sm rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-blue-600 font-medium text-slate-700"
             >
               <option value="ALL">Semua Kelas ({submissions.length})</option>
               {classes.map((c) => (
@@ -457,7 +457,7 @@ function QuizResultsContent() {
                 setSortField(f);
                 setSortOrder(o);
               }}
-              className="w-full px-2.5 py-2 text-xs md:text-sm rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-indigo-600 font-semibold text-slate-700"
+              className="w-full px-2.5 py-2 text-xs md:text-sm rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-blue-600 font-semibold text-slate-700"
             >
               <option value="nilai-desc">Nilai Tertinggi (Peringkat)</option>
               <option value="nilai-asc">Nilai Terendah</option>
@@ -482,15 +482,15 @@ function QuizResultsContent() {
                 {/* Sortable Header: Nama Murid */}
                 <th
                   onClick={() => handleHeaderSort("nama")}
-                  className="py-3.5 px-4 cursor-pointer hover:text-indigo-600 select-none group"
+                  className="py-3.5 px-4 cursor-pointer hover:text-blue-700 select-none group"
                 >
                   <div className="flex items-center gap-1">
                     <span>Nama Murid</span>
                     {sortField === "nama" ? (
                       sortOrder === "asc" ? (
-                        <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                        <ChevronUp className="w-3.5 h-3.5 text-blue-700" />
                       ) : (
-                        <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
+                        <ChevronDown className="w-3.5 h-3.5 text-blue-700" />
                       )
                     ) : (
                       <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
@@ -501,15 +501,15 @@ function QuizResultsContent() {
                 {/* Sortable Header: Kelas */}
                 <th
                   onClick={() => handleHeaderSort("kelas")}
-                  className="py-3.5 px-4 cursor-pointer hover:text-indigo-600 select-none group"
+                  className="py-3.5 px-4 cursor-pointer hover:text-blue-700 select-none group"
                 >
                   <div className="flex items-center gap-1">
                     <span>Kelas</span>
                     {sortField === "kelas" ? (
                       sortOrder === "asc" ? (
-                        <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                        <ChevronUp className="w-3.5 h-3.5 text-blue-700" />
                       ) : (
-                        <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
+                        <ChevronDown className="w-3.5 h-3.5 text-blue-700" />
                       )
                     ) : (
                       <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
@@ -520,15 +520,15 @@ function QuizResultsContent() {
                 {/* Sortable Header: Nilai */}
                 <th
                   onClick={() => handleHeaderSort("nilai")}
-                  className="py-3.5 px-4 text-center cursor-pointer hover:text-indigo-600 select-none group"
+                  className="py-3.5 px-4 text-center cursor-pointer hover:text-blue-700 select-none group"
                 >
                   <div className="flex items-center justify-center gap-1">
                     <span>Nilai</span>
                     {sortField === "nilai" ? (
                       sortOrder === "asc" ? (
-                        <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                        <ChevronUp className="w-3.5 h-3.5 text-blue-700" />
                       ) : (
-                        <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
+                        <ChevronDown className="w-3.5 h-3.5 text-blue-700" />
                       )
                     ) : (
                       <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
@@ -542,15 +542,15 @@ function QuizResultsContent() {
                 {/* Sortable Header: Waktu Selesai */}
                 <th
                   onClick={() => handleHeaderSort("waktu")}
-                  className="py-3.5 px-4 text-right cursor-pointer hover:text-indigo-600 select-none group"
+                  className="py-3.5 px-4 text-right cursor-pointer hover:text-blue-700 select-none group"
                 >
                   <div className="flex items-center justify-end gap-1">
                     <span>Waktu Selesai</span>
                     {sortField === "waktu" ? (
                       sortOrder === "asc" ? (
-                        <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                        <ChevronUp className="w-3.5 h-3.5 text-blue-700" />
                       ) : (
-                        <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
+                        <ChevronDown className="w-3.5 h-3.5 text-blue-700" />
                       )
                     ) : (
                       <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
@@ -606,7 +606,7 @@ function QuizResultsContent() {
                             sub.score >= 80
                               ? "text-emerald-600"
                               : sub.score >= 60
-                              ? "text-indigo-600"
+                              ? "text-blue-700"
                               : "text-rose-500"
                           }
                         >
@@ -643,7 +643,7 @@ function QuizResultsContent() {
                               sounds.playSelect();
                               setSelectedSubmission(sub);
                             }}
-                            className="px-2.5 py-1 text-xs rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200 transition-colors cursor-pointer inline-flex items-center gap-1"
+                            className="px-2.5 py-1 text-xs rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold border border-blue-200 transition-colors cursor-pointer inline-flex items-center gap-1"
                             title="Lihat lembar jawaban murid"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -748,7 +748,7 @@ function QuizResultsContent() {
             {/* Modal Header */}
             <div className="p-5 md:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-100">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
                   Review Lembar Jawaban Siswa
                 </span>
                 <h3 className="text-lg md:text-xl font-extrabold text-slate-900 mt-1">
@@ -766,10 +766,10 @@ function QuizResultsContent() {
             </div>
 
             {/* Score Summary in Modal */}
-            <div className="grid grid-cols-3 gap-3 p-4 bg-indigo-50/40 border-b border-slate-100 text-center">
+            <div className="grid grid-cols-3 gap-3 p-4 bg-blue-50/50 border-b border-slate-100 text-center">
               <div>
                 <span className="text-[11px] text-slate-400 block font-medium">Nilai Akhir</span>
-                <span className="text-2xl font-black text-indigo-700 font-mono">
+                <span className="text-2xl font-black text-blue-800 font-mono">
                   {selectedSubmission.score}
                 </span>
               </div>
@@ -907,7 +907,7 @@ export default function QuizResultsPage() {
     <Suspense
       fallback={
         <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3" />
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
           <p className="text-slate-500 text-sm">Menyiapkan rekap nilai...</p>
         </div>
       }

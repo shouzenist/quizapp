@@ -122,7 +122,7 @@ export default function TeacherDashboard() {
       {/* Top Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 mb-2">
             <BookOpen className="w-3.5 h-3.5" />
             <span>Dashboard Manajemen Guru</span>
           </div>
@@ -144,13 +144,13 @@ export default function TeacherDashboard() {
             title="Segarkan Data"
             className="p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-sm transition-all active:scale-95 cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-indigo-600" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-blue-600" : ""}`} />
           </button>
 
           <Link
             href="/guru/quiz/new"
             onClick={() => sounds.playSelect()}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm shadow-md shadow-indigo-600/25 active:scale-95 transition-all cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-blue-900 via-blue-700 to-sky-500 hover:from-blue-950 hover:via-blue-800 hover:to-sky-600 text-white font-bold text-sm shadow-md shadow-blue-900/20 active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Buat Kuis Baru</span>
@@ -166,7 +166,7 @@ export default function TeacherDashboard() {
               ? "bg-emerald-50/90 border-emerald-200 text-emerald-900"
               : diag.isConfigured
               ? "bg-amber-50/90 border-amber-300 text-amber-900"
-              : "bg-indigo-50/90 border-indigo-200 text-indigo-900"
+              : "bg-blue-50/90 border-blue-200 text-blue-900"
           }`}
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -223,7 +223,7 @@ export default function TeacherDashboard() {
         <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase mb-2">
             <span>Total Kuis</span>
-            <BookOpen className="w-4 h-4 text-indigo-500" />
+            <BookOpen className="w-4 h-4 text-blue-600" />
           </div>
           <div className="text-3xl font-extrabold text-slate-900 font-mono">
             {quizzes.length}
@@ -263,7 +263,7 @@ export default function TeacherDashboard() {
 
         {loading ? (
           <div className="p-12 text-center bg-white rounded-2xl border border-slate-200">
-            <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-xs text-slate-500">Memuat data kuis...</p>
           </div>
         ) : quizzes.length === 0 ? (
@@ -275,7 +275,7 @@ export default function TeacherDashboard() {
             </p>
             <Link
               href="/guru/quiz/new"
-              className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-900 via-blue-700 to-sky-500 text-white text-xs font-semibold shadow-sm"
             >
               Buat Kuis Sekarang
             </Link>
@@ -290,7 +290,7 @@ export default function TeacherDashboard() {
                 {/* Left Info */}
                 <div className="space-y-2 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                    <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                       {quiz.subject || "Umum"}
                     </span>
                     <button
@@ -362,13 +362,13 @@ export default function TeacherDashboard() {
                   {/* Quiz Code Pill */}
                   <div className="flex items-center gap-1.5 p-2 rounded-xl bg-slate-50 border border-slate-200">
                     <span className="text-xs text-slate-400 font-medium px-1">KODE:</span>
-                    <span className="font-mono font-bold text-sm text-indigo-700 tracking-wider">
+                    <span className="font-mono font-bold text-sm text-blue-800 tracking-wider">
                       {quiz.quiz_code}
                     </span>
                     <button
                       onClick={() => handleCopyCode(quiz.quiz_code, quiz.id)}
                       title="Salin Link Kuis"
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-200/60 transition-colors ml-1 cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-blue-700 hover:bg-slate-200/60 transition-colors ml-1 cursor-pointer"
                     >
                       {copiedId === quiz.id ? (
                         <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -385,9 +385,9 @@ export default function TeacherDashboard() {
                       setSelectedQRQuiz(quiz);
                     }}
                     title="Tampilkan QR Code untuk Proyektor"
-                    className="p-2.5 rounded-xl border border-slate-200 hover:border-indigo-400 text-slate-700 hover:text-indigo-600 hover:bg-indigo-50/50 transition-colors flex items-center justify-center gap-1 text-xs font-semibold cursor-pointer"
+                    className="p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 text-slate-700 hover:text-blue-700 hover:bg-blue-50/50 transition-colors flex items-center justify-center gap-1 text-xs font-semibold cursor-pointer"
                   >
-                    <QrCode className="w-4 h-4 text-indigo-600" />
+                    <QrCode className="w-4 h-4 text-blue-700" />
                     <span className="sm:hidden">QR Proyektor</span>
                   </button>
 
@@ -395,7 +395,7 @@ export default function TeacherDashboard() {
                   <Link
                     href={`/guru/quiz/${quiz.id}/results`}
                     onClick={() => sounds.playSelect()}
-                    className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+                    className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
                   >
                     <BarChart2 className="w-4 h-4" />
                     <span>Lihat Nilai</span>

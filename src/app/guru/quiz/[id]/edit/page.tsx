@@ -370,7 +370,7 @@ function EditQuizContent() {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3" />
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
         <p className="text-slate-500 text-sm">Memuat data kuis...</p>
       </div>
     );
@@ -381,7 +381,7 @@ function EditQuizContent() {
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
         <AlertTriangle className="w-12 h-12 text-rose-500 mb-3" />
         <h2 className="text-xl font-bold text-slate-800">Kuis Tidak Ditemukan</h2>
-        <Link href="/guru" className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold">
+        <Link href="/guru" className="mt-4 px-4 py-2 bg-gradient-to-r from-blue-900 via-blue-700 to-sky-500 text-white rounded-xl text-xs font-semibold shadow-sm">
           Kembali ke Dashboard Guru
         </Link>
       </div>
@@ -396,7 +396,7 @@ function EditQuizContent() {
         <Link
           href="/guru"
           onClick={() => sounds.playSelect()}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-700 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Kembali ke Dashboard Guru</span>
@@ -421,7 +421,7 @@ function EditQuizContent() {
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="p-6 md:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 pb-2 border-b border-slate-100">
-            <Layers className="w-4 h-4 text-indigo-600" />
+            <Layers className="w-4 h-4 text-blue-700" />
             <span>Pengaturan Kuis</span>
           </h2>
 
@@ -435,7 +435,7 @@ function EditQuizContent() {
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all text-slate-800 text-sm font-medium"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all text-slate-800 text-sm font-medium"
               />
             </div>
 
@@ -447,7 +447,7 @@ function EditQuizContent() {
                 type="text"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all text-slate-800 text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all text-slate-800 text-sm"
               />
             </div>
 
@@ -460,7 +460,7 @@ function EditQuizContent() {
                 maxLength={10}
                 value={quizCode}
                 onChange={(e) => setQuizCode(e.target.value.toUpperCase())}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all font-mono font-bold text-sm text-indigo-700 uppercase"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all font-mono font-bold text-sm text-blue-800 uppercase"
               />
             </div>
 
@@ -472,7 +472,7 @@ function EditQuizContent() {
                 rows={2}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all text-slate-800 text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all text-slate-800 text-sm"
               />
             </div>
 
@@ -486,7 +486,7 @@ function EditQuizContent() {
                 max={180}
                 value={timeLimitMinutes}
                 onChange={(e) => setTimeLimitMinutes(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all text-slate-800 text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all text-slate-800 text-sm"
               />
             </div>
 
@@ -498,7 +498,7 @@ function EditQuizContent() {
                   onChange={(e) => setIsActive(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 <span className="ml-3 text-xs font-semibold text-slate-700">
                   {isActive ? "Kuis Aktif (Bisa Dikerjakan)" : "Kuis Nonaktif"}
                 </span>
@@ -546,7 +546,7 @@ function EditQuizContent() {
                       sounds.playSelect();
                       setTargetClasses(["7A", "7B", "7C", "7D"]);
                     }}
-                    className="px-2 py-0.5 text-xs rounded-md bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 transition-colors font-medium cursor-pointer"
+                    className="px-2 py-0.5 text-xs rounded-md bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition-colors font-medium cursor-pointer"
                   >
                     SMP 7 (7A-7D)
                   </button>
@@ -556,7 +556,7 @@ function EditQuizContent() {
                       sounds.playSelect();
                       setTargetClasses(["8A", "8B", "8C", "8D"]);
                     }}
-                    className="px-2 py-0.5 text-xs rounded-md bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 transition-colors font-medium cursor-pointer"
+                    className="px-2 py-0.5 text-xs rounded-md bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition-colors font-medium cursor-pointer"
                   >
                     SMP 8
                   </button>
@@ -566,7 +566,7 @@ function EditQuizContent() {
                       sounds.playSelect();
                       setTargetClasses(["9A", "9B", "9C", "9D"]);
                     }}
-                    className="px-2 py-0.5 text-xs rounded-md bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 transition-colors font-medium cursor-pointer"
+                    className="px-2 py-0.5 text-xs rounded-md bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition-colors font-medium cursor-pointer"
                   >
                     SMP 9
                   </button>
@@ -576,7 +576,7 @@ function EditQuizContent() {
                       sounds.playSelect();
                       setTargetClasses(["10 MIPA 1", "10 MIPA 2", "10 IPS 1", "10 IPS 2"]);
                     }}
-                    className="px-2 py-0.5 text-xs rounded-md bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 transition-colors font-medium cursor-pointer"
+                    className="px-2 py-0.5 text-xs rounded-md bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 transition-colors font-medium cursor-pointer"
                   >
                     SMA 10
                   </button>
@@ -599,7 +599,7 @@ function EditQuizContent() {
                   {targetClasses.map((cls) => (
                     <span
                       key={cls}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-indigo-200 text-indigo-700 text-xs font-bold shadow-xs"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-blue-200 text-blue-700 text-xs font-bold shadow-xs"
                     >
                       <span>{cls}</span>
                       <button
@@ -632,12 +632,12 @@ function EditQuizContent() {
                       }
                     }}
                     placeholder="Tambah kelas lain (misal: 7E atau XII TKJ 1) lalu tekan Enter..."
-                    className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-600 bg-white"
+                    className="flex-1 px-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:border-blue-600 bg-white"
                   />
                   <button
                     type="button"
                     onClick={handleAddClass}
-                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
                   >
                     + Tambah
                   </button>
@@ -655,7 +655,7 @@ function EditQuizContent() {
             <button
               type="button"
               onClick={handleAddQuestion}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs border border-blue-200 transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Tambah Soal</span>
@@ -663,11 +663,11 @@ function EditQuizContent() {
           </div>
 
           {/* Quick Global Defaults Bar */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-50/80 via-violet-50/60 to-slate-50 border border-indigo-100/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-50/80 via-sky-50/60 to-slate-50 border border-blue-100/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Default Poin */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <Award className="w-4 h-4 text-indigo-600" />
+                <Award className="w-4 h-4 text-blue-700" />
                 <span>Poin per Soal:</span>
               </span>
 
@@ -679,8 +679,8 @@ function EditQuizContent() {
                     onClick={() => handleApplyDefaultPoints(pts)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                       defaultPoints === pts
-                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs ring-2 ring-indigo-200"
-                        : "bg-white text-slate-700 border-slate-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-200"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-blue-700"
                     }`}
                   >
                     {pts} Pts
@@ -694,7 +694,7 @@ function EditQuizContent() {
                     max={100}
                     value={defaultPoints}
                     onChange={(e) => handleApplyDefaultPoints(Number(e.target.value))}
-                    className="w-12 text-center font-bold text-xs text-indigo-700 focus:outline-none"
+                    className="w-12 text-center font-bold text-xs text-blue-800 focus:outline-none"
                   />
                   <span className="text-[11px] text-slate-400 font-medium">Poin</span>
                 </div>
@@ -712,7 +712,7 @@ function EditQuizContent() {
             </div>
 
             {/* Default Pilihan Ganda (3-5 Opsi) */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-indigo-100">
+            <div className="flex flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-blue-100">
               <span className="text-xs font-bold text-slate-700">
                 Pilihan Ganda:
               </span>
@@ -724,8 +724,8 @@ function EditQuizContent() {
                     onClick={() => handleApplyDefaultOptionCount(cnt)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                       defaultOptionCount === cnt
-                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs ring-2 ring-indigo-200"
-                        : "bg-white text-slate-700 border-slate-200 hover:bg-indigo-50 hover:text-indigo-600"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-200"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50 hover:text-blue-700"
                     }`}
                   >
                     {cnt} Opsi ({cnt === 3 ? "A-C" : cnt === 4 ? "A-D" : "A-E"})
@@ -741,7 +741,7 @@ function EditQuizContent() {
               className="p-6 md:p-7 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5"
             >
               <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                <span className="text-sm font-extrabold text-indigo-700">
+                <span className="text-sm font-extrabold text-blue-800">
                   Soal Nomor {qIdx + 1}
                 </span>
 
@@ -754,7 +754,7 @@ function EditQuizContent() {
                       max={100}
                       value={question.points || 10}
                       onChange={(e) => handlePointsChange(qIdx, Number(e.target.value))}
-                      className="w-14 px-2 py-1 text-center font-bold text-xs border border-slate-200 rounded-lg"
+                      className="w-14 px-2 py-1 text-center font-bold text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-600"
                     />
                   </div>
 
@@ -778,7 +778,7 @@ function EditQuizContent() {
                   value={question.question_text}
                   onChange={(e) => handleQuestionTextChange(qIdx, e.target.value)}
                   onPaste={(e) => handleTextareaPaste(e, qIdx)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all text-slate-800 text-sm font-medium"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all text-slate-800 text-sm font-medium"
                 />
               </div>
 
@@ -809,7 +809,7 @@ function EditQuizContent() {
                           onClick={() => handleSetQuestionOptionCount(qIdx, cnt)}
                           className={`px-2 py-0.5 rounded-md text-[11px] font-bold border transition-colors cursor-pointer ${
                             isActive
-                              ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                              ? "bg-blue-600 text-white border-blue-600 shadow-xs"
                               : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
                           }`}
                         >
@@ -878,7 +878,7 @@ function EditQuizContent() {
                   <button
                     type="button"
                     onClick={() => handleAddOptionToQuestion(qIdx)}
-                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer mt-1"
+                    className="inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold text-blue-700 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer mt-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Tambah Pilihan ({letters[question.options.length]})</span>
@@ -900,7 +900,7 @@ function EditQuizContent() {
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm shadow-md shadow-indigo-600/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-900 via-blue-700 to-sky-500 hover:from-blue-950 hover:via-blue-800 hover:to-sky-600 text-white font-bold text-sm shadow-md shadow-blue-900/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             <span>{saving ? "Memperbarui..." : "Simpan Perubahan"}</span>
@@ -916,7 +916,7 @@ export default function EditQuizPage() {
     <Suspense
       fallback={
         <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3" />
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
           <p className="text-slate-500 text-sm">Menyiapkan editor kuis...</p>
         </div>
       }

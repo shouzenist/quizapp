@@ -33,14 +33,14 @@ export default function Navbar() {
           className="flex items-center gap-2.5 group transition-transform active:scale-95"
           onClick={() => sounds.playSelect()}
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-900 via-blue-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-blue-600/20 group-hover:shadow-blue-600/40 transition-shadow">
             <Sparkles className="w-5 h-5" />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xl font-extrabold bg-gradient-to-r from-indigo-700 via-indigo-600 to-violet-600 bg-clip-text text-transparent tracking-tight">
+            <span className="text-xl font-extrabold bg-gradient-to-r from-blue-950 via-blue-700 to-sky-500 bg-clip-text text-transparent tracking-tight">
               3G Quiz
             </span>
-            <span className="hidden sm:inline-block px-2.5 py-0.5 text-[11px] font-bold tracking-wide rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+            <span className="hidden sm:inline-block px-2.5 py-0.5 text-[11px] font-bold tracking-wide rounded-full bg-blue-50 text-blue-800 border border-blue-200/80">
               SMP Negeri 3 Godean
             </span>
           </div>
@@ -50,7 +50,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {/* Status Badge */}
           <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-slate-50 text-slate-600 border-slate-200">
-            <Database className="w-3.5 h-3.5 text-indigo-500" />
+            <Database className="w-3.5 h-3.5 text-blue-600" />
             <span>{isSupabaseConfigured ? "Supabase Live" : "Mode Demo Siap"}</span>
           </div>
 
@@ -58,10 +58,10 @@ export default function Navbar() {
           <button
             onClick={toggleSound}
             title={soundActive ? "Nonaktifkan Suara" : "Aktifkan Suara"}
-            className="p-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-xl text-slate-500 hover:text-blue-700 hover:bg-slate-100 transition-colors"
           >
             {soundActive ? (
-              <Volume2 className="w-5 h-5 text-indigo-600" />
+              <Volume2 className="w-5 h-5 text-blue-700" />
             ) : (
               <VolumeX className="w-5 h-5 text-slate-400" />
             )}
@@ -74,7 +74,7 @@ export default function Navbar() {
               onClick={() => sounds.playSelect()}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 pathname === "/" || pathname?.startsWith("/play")
-                  ? "bg-white text-indigo-700 shadow-sm"
+                  ? "bg-white text-blue-900 shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -87,7 +87,7 @@ export default function Navbar() {
               onClick={() => sounds.playSelect()}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 pathname?.startsWith("/guru")
-                  ? "bg-indigo-600 text-white shadow-sm"
+                  ? "bg-gradient-to-r from-blue-900 via-blue-700 to-sky-600 text-white shadow-sm shadow-blue-900/20"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
