@@ -36,6 +36,10 @@ export interface StudentAnswer {
   question_id: string;
   selected_option_id: string;
   is_correct: boolean;
+  question_index?: number;
+  question_text?: string;
+  selected_option_text?: string;
+  selected_option_index?: number;
 }
 
 export interface Submission {
@@ -50,4 +54,6 @@ export interface Submission {
   started_at: string;
   completed_at: string;
   answers?: StudentAnswer[];
+  answers_data?: StudentAnswer[];
 }
+

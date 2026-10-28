@@ -173,10 +173,12 @@ function PlayQuizContent() {
     let correct = 0;
     const recordedAnswers: StudentAnswer[] = [];
 
-    questions.forEach((q) => {
+    questions.forEach((q, idx) => {
       const selectedId = selectedAnswers[q.id];
       const correctOption = q.options.find((opt) => opt.is_correct);
       const isCorrect = selectedId === correctOption?.id;
+      const selectedOption = q.options.find((opt) => opt.id === selectedId);
+      const selectedOptIdx = q.options.findIndex((opt) => opt.id === selectedId);
 
       if (isCorrect) {
         correct += 1;
@@ -185,7 +187,11 @@ function PlayQuizContent() {
 
       recordedAnswers.push({
         question_id: q.id,
+        question_index: idx,
+        question_text: q.question_text,
         selected_option_id: selectedId || "",
+        selected_option_text: selectedOption?.option_text || "",
+        selected_option_index: selectedOptIdx >= 0 ? selectedOptIdx : undefined,
         is_correct: isCorrect,
       });
     });

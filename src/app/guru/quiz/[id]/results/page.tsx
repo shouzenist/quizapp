@@ -15,14 +15,31 @@ import {
   ShieldAlert,
   Search,
   CheckCircle2,
+  AlertCircle,
   Award,
   Eye,
   EyeOff,
   X,
+  Trash2,
+  RefreshCw,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
+  Loader2,
 } from "lucide-react";
-import { getQuizById, getSubmissionsByQuizId, saveQuiz } from "@/lib/quizStore";
+import {
+  getQuizById,
+  getSubmissionsByQuizId,
+  saveQuiz,
+  deleteSubmission,
+  clearQuizSubmissions,
+  recalculateQuizSubmissions,
+} from "@/lib/quizStore";
 import { Quiz, Submission } from "@/lib/types";
 import { sounds } from "@/lib/sound";
+
+type SortField = "nilai" | "nama" | "kelas" | "waktu";
+type SortOrder = "asc" | "desc";
 
 function QuizResultsContent() {
   const params = useParams();
@@ -33,9 +50,18 @@ function QuizResultsContent() {
   const [loading, setLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 
-  // Filters
+  // Filters & Sorting
   const [selectedClass, setSelectedClass] = useState<string>("ALL");
   const [searchName, setSearchName] = useState<string>("");
+  const [sortField, setSortField] = useState<SortField>("nilai");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+
+  // Actions states
+  const [isResyncing, setIsResyncing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [submissionToDelete, setSubmissionToDelete] = useState<Submission | null>(null);
+  const [showClearAllModal, setShowClearAllModal] = useState(false);
+  const [notification, setNotification] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const handleToggleReview = async () => {
     if (!quiz) return;
@@ -66,34 +92,125 @@ function QuizResultsContent() {
   // Extract unique classes
   const classes = Array.from(new Set(submissions.map((s) => s.student_class))).filter(Boolean);
 
-  // Filtered submissions
-  const filteredSubmissions = submissions.filter((s) => {
-    const matchesClass = selectedClass === "ALL" || s.student_class === selectedClass;
-    const matchesName = s.student_name.toLowerCase().includes(searchName.toLowerCase());
-    return matchesClass && matchesName;
-  });
+  // Filter & Sort submissions
+  const filteredAndSortedSubmissions = submissions
+    .filter((s) => {
+      const matchesClass = selectedClass === "ALL" || s.student_class === selectedClass;
+      const matchesName = s.student_name.toLowerCase().includes(searchName.toLowerCase());
+      return matchesClass && matchesName;
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+      if (sortField === "nilai") {
+        comparison = a.score - b.score;
+      } else if (sortField === "nama") {
+        comparison = a.student_name.localeCompare(b.student_name, "id");
+      } else if (sortField === "kelas") {
+        comparison = a.student_class.localeCompare(b.student_class, "id");
+      } else if (sortField === "waktu") {
+        comparison = new Date(a.completed_at).getTime() - new Date(b.completed_at).getTime();
+      }
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
 
-  // Analytics calculations
-  const totalStudents = filteredSubmissions.length;
+  const handleHeaderSort = (field: SortField) => {
+    sounds.playSelect();
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortOrder(field === "nama" || field === "kelas" ? "asc" : "desc");
+    }
+  };
+
+  // Sinkronisasi Ulang / Penilaian Ulang
+  const handleRecalculate = async () => {
+    if (!quizId) return;
+    sounds.playSelect();
+    setIsResyncing(true);
+    setNotification(null);
+    try {
+      const res = await recalculateQuizSubmissions(quizId);
+      if (res.success) {
+        sounds.playCorrect();
+        setSubmissions(res.submissions);
+        setNotification({ type: "success", text: res.message });
+      } else {
+        sounds.playWrong();
+        setNotification({ type: "error", text: res.message });
+      }
+    } catch {
+      sounds.playWrong();
+      setNotification({ type: "error", text: "Terjadi kesalahan saat menyinkronkan ulang nilai." });
+    } finally {
+      setIsResyncing(false);
+    }
+  };
+
+  // Hapus single submission
+  const handleConfirmDelete = async () => {
+    if (!submissionToDelete) return;
+    setIsDeleting(true);
+    try {
+      const ok = await deleteSubmission(submissionToDelete.id, quizId);
+      if (ok) {
+        sounds.playCorrect();
+        setSubmissions((prev) => prev.filter((s) => s.id !== submissionToDelete.id));
+        setNotification({
+          type: "success",
+          text: `Data nilai murid "${submissionToDelete.student_name}" berhasil dihapus.`,
+        });
+      }
+    } catch {
+      sounds.playWrong();
+      setNotification({ type: "error", text: "Gagal menghapus data nilai." });
+    } finally {
+      setIsDeleting(false);
+      setSubmissionToDelete(null);
+    }
+  };
+
+  // Reset semua submissions
+  const handleConfirmClearAll = async () => {
+    setIsDeleting(true);
+    try {
+      await clearQuizSubmissions(quizId);
+      sounds.playCorrect();
+      setSubmissions([]);
+      setNotification({
+        type: "success",
+        text: "Semua data nilai dan riwayat pengerjaan murid telah dibersihkan.",
+      });
+    } catch {
+      sounds.playWrong();
+      setNotification({ type: "error", text: "Gagal membersihkan data nilai." });
+    } finally {
+      setIsDeleting(false);
+      setShowClearAllModal(false);
+    }
+  };
+
+  // Analytics calculations based on current filtered items
+  const totalStudents = filteredAndSortedSubmissions.length;
   const averageScore = totalStudents > 0
-    ? Math.round(filteredSubmissions.reduce((sum, s) => sum + s.score, 0) / totalStudents)
+    ? Math.round(filteredAndSortedSubmissions.reduce((sum, s) => sum + s.score, 0) / totalStudents)
     : 0;
   const highestScore = totalStudents > 0
-    ? Math.max(...filteredSubmissions.map((s) => s.score))
+    ? Math.max(...filteredAndSortedSubmissions.map((s) => s.score))
     : 0;
   const lowestScore = totalStudents > 0
-    ? Math.min(...filteredSubmissions.map((s) => s.score))
+    ? Math.min(...filteredAndSortedSubmissions.map((s) => s.score))
     : 0;
 
   // Export to Excel function
   const handleExportExcel = () => {
     sounds.playSelect();
-    if (filteredSubmissions.length === 0) {
+    if (filteredAndSortedSubmissions.length === 0) {
       alert("Belum ada data pengerjaan murid untuk diekspor.");
       return;
     }
 
-    const excelData = filteredSubmissions.map((sub, idx) => ({
+    const excelData = filteredAndSortedSubmissions.map((sub, idx) => ({
       No: idx + 1,
       "Nama Murid": sub.student_name,
       Kelas: sub.student_class,
@@ -108,8 +225,7 @@ function QuizResultsContent() {
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(excelData);
-
-    const colWidths = [
+    worksheet["!cols"] = [
       { wch: 6 },
       { wch: 28 },
       { wch: 12 },
@@ -119,7 +235,6 @@ function QuizResultsContent() {
       { wch: 24 },
       { wch: 22 },
     ];
-    worksheet["!cols"] = colWidths;
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Nilai");
@@ -152,6 +267,18 @@ function QuizResultsContent() {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {/* Sinkronkan Ulang Button */}
+          <button
+            onClick={handleRecalculate}
+            disabled={isResyncing}
+            title="Hitung ulang seluruh nilai murid berdasarkan kunci jawaban kuis terbaru"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+          >
+            <RefreshCw className={`w-4 h-4 ${isResyncing ? "animate-spin" : ""}`} />
+            <span>{isResyncing ? "Menyinkronkan..." : "Sinkronkan Ulang Nilai"}</span>
+          </button>
+
+          {/* Review Murid Toggle */}
           <button
             onClick={handleToggleReview}
             title="Atur apakah murid boleh melihat review jawaban setelah kuis selesai"
@@ -164,25 +291,67 @@ function QuizResultsContent() {
             {quiz?.show_answer_review !== false ? (
               <>
                 <Eye className="w-4 h-4" />
-                <span>Review Murid: Tampil</span>
+                <span>Review: Tampil</span>
               </>
             ) : (
               <>
                 <EyeOff className="w-4 h-4" />
-                <span>Review Murid: Sembunyi</span>
+                <span>Review: Sembunyi</span>
               </>
             )}
           </button>
 
+          {/* Export Excel */}
           <button
             onClick={handleExportExcel}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs md:text-sm shadow-md shadow-emerald-600/20 active:scale-95 transition-all cursor-pointer"
           >
             <Download className="w-4 h-4" />
-            <span>Download Excel (.xlsx)</span>
+            <span>Export Excel (.xlsx)</span>
           </button>
+
+          {/* Reset / Hapus Semua Testing Data */}
+          {submissions.length > 0 && (
+            <button
+              onClick={() => {
+                sounds.playSelect();
+                setShowClearAllModal(true);
+              }}
+              title="Bersihkan seluruh data hasil untuk reset testing"
+              className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs md:text-sm font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Reset Hasil</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Notification Banner */}
+      {notification && (
+        <div
+          className={`p-4 rounded-2xl mb-6 text-xs md:text-sm font-medium flex items-center justify-between border animate-in fade-in ${
+            notification.type === "success"
+              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+              : "bg-rose-50 text-rose-800 border-rose-200"
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            {notification.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+            ) : (
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
+            )}
+            <span>{notification.text}</span>
+          </div>
+          <button
+            onClick={() => setNotification(null)}
+            className="p-1 hover:bg-black/5 rounded-lg text-slate-500 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Quiz Header Title */}
       <div className="p-6 md:p-8 rounded-3xl bg-white border border-slate-200 shadow-sm mb-6">
@@ -245,9 +414,10 @@ function QuizResultsContent() {
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm mb-6 flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="relative w-full sm:w-72">
+      {/* Filter and Search & Sorting Bar */}
+      <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row gap-3 items-center justify-between">
+        {/* Search Input */}
+        <div className="relative w-full md:w-64">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -258,21 +428,46 @@ function QuizResultsContent() {
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-slate-400 flex-shrink-0" />
-          <span className="text-xs font-semibold text-slate-600">Filter Kelas:</span>
-          <select
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="px-3 py-2 text-xs md:text-sm rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-indigo-600 font-semibold text-slate-700"
-          >
-            <option value="ALL">Semua Kelas ({submissions.length})</option>
-            {classes.map((c) => (
-              <option key={c} value={c}>
-                Kelas {c} ({submissions.filter((s) => s.student_class === c).length})
-              </option>
-            ))}
-          </select>
+        {/* Filter Kelas & Sorting Dropdown */}
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {/* Class Filter */}
+          <div className="flex items-center gap-1.5 flex-1 md:flex-initial">
+            <Filter className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+            <select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              className="w-full px-2.5 py-2 text-xs md:text-sm rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-indigo-600 font-medium text-slate-700"
+            >
+              <option value="ALL">Semua Kelas ({submissions.length})</option>
+              {classes.map((c) => (
+                <option key={c} value={c}>
+                  Kelas {c} ({submissions.filter((s) => s.student_class === c).length})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sorting Dropdown */}
+          <div className="flex items-center gap-1.5 flex-1 md:flex-initial">
+            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+            <select
+              value={`${sortField}-${sortOrder}`}
+              onChange={(e) => {
+                const [f, o] = e.target.value.split("-") as [SortField, SortOrder];
+                setSortField(f);
+                setSortOrder(o);
+              }}
+              className="w-full px-2.5 py-2 text-xs md:text-sm rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:border-indigo-600 font-semibold text-slate-700"
+            >
+              <option value="nilai-desc">Nilai Tertinggi (Peringkat)</option>
+              <option value="nilai-asc">Nilai Terendah</option>
+              <option value="nama-asc">Nama Murid (A - Z)</option>
+              <option value="nama-desc">Nama Murid (Z - A)</option>
+              <option value="kelas-asc">Kelas (A - Z)</option>
+              <option value="waktu-desc">Waktu Selesai (Terbaru)</option>
+              <option value="waktu-asc">Waktu Selesai (Terlama)</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -283,39 +478,113 @@ function QuizResultsContent() {
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[11px] font-bold">
                 <th className="py-3.5 px-4 w-12 text-center">No</th>
-                <th className="py-3.5 px-4">Nama Murid</th>
-                <th className="py-3.5 px-4">Kelas</th>
-                <th className="py-3.5 px-4 text-center">Nilai</th>
+                
+                {/* Sortable Header: Nama Murid */}
+                <th
+                  onClick={() => handleHeaderSort("nama")}
+                  className="py-3.5 px-4 cursor-pointer hover:text-indigo-600 select-none group"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Nama Murid</span>
+                    {sortField === "nama" ? (
+                      sortOrder === "asc" ? (
+                        <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
+                      )
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
+                    )}
+                  </div>
+                </th>
+
+                {/* Sortable Header: Kelas */}
+                <th
+                  onClick={() => handleHeaderSort("kelas")}
+                  className="py-3.5 px-4 cursor-pointer hover:text-indigo-600 select-none group"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Kelas</span>
+                    {sortField === "kelas" ? (
+                      sortOrder === "asc" ? (
+                        <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
+                      )
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
+                    )}
+                  </div>
+                </th>
+
+                {/* Sortable Header: Nilai */}
+                <th
+                  onClick={() => handleHeaderSort("nilai")}
+                  className="py-3.5 px-4 text-center cursor-pointer hover:text-indigo-600 select-none group"
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span>Nilai</span>
+                    {sortField === "nilai" ? (
+                      sortOrder === "asc" ? (
+                        <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
+                      )
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
+                    )}
+                  </div>
+                </th>
+
                 <th className="py-3.5 px-4 text-center">Benar</th>
                 <th className="py-3.5 px-4 text-center">Pindah Tab</th>
-                <th className="py-3.5 px-4 text-center">Review Jawaban</th>
-                <th className="py-3.5 px-4 text-right">Waktu Selesai</th>
+
+                {/* Sortable Header: Waktu Selesai */}
+                <th
+                  onClick={() => handleHeaderSort("waktu")}
+                  className="py-3.5 px-4 text-right cursor-pointer hover:text-indigo-600 select-none group"
+                >
+                  <div className="flex items-center justify-end gap-1">
+                    <span>Waktu Selesai</span>
+                    {sortField === "waktu" ? (
+                      sortOrder === "asc" ? (
+                        <ChevronUp className="w-3.5 h-3.5 text-indigo-600" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5 text-indigo-600" />
+                      )
+                    ) : (
+                      <ArrowUpDown className="w-3 h-3 text-slate-300 group-hover:text-slate-500" />
+                    )}
+                  </div>
+                </th>
+
+                <th className="py-3.5 px-4 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredSubmissions.length === 0 ? (
+              {filteredAndSortedSubmissions.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-12 text-slate-400">
-                    Belum ada data murid yang sesuai filter.
+                    Belum ada data murid yang sesuai filter atau data pengerjaan kuis masih kosong.
                   </td>
                 </tr>
               ) : (
-                filteredSubmissions.map((sub, idx) => {
+                filteredAndSortedSubmissions.map((sub, idx) => {
                   return (
                     <tr
                       key={sub.id}
                       className="hover:bg-slate-50/60 transition-colors"
                     >
                       <td className="py-3.5 px-4 text-center font-bold font-mono">
-                        {idx === 0 ? (
+                        {sortField === "nilai" && sortOrder === "desc" && idx === 0 ? (
                           <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs">
                             🥇
                           </span>
-                        ) : idx === 1 ? (
+                        ) : sortField === "nilai" && sortOrder === "desc" && idx === 1 ? (
                           <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-700 text-xs">
                             🥈
                           </span>
-                        ) : idx === 2 ? (
+                        ) : sortField === "nilai" && sortOrder === "desc" && idx === 2 ? (
                           <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-100 text-orange-700 text-xs">
                             🥉
                           </span>
@@ -357,24 +626,43 @@ function QuizResultsContent() {
                           <span className="text-slate-400">0</span>
                         )}
                       </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            sounds.playSelect();
-                            setSelectedSubmission(sub);
-                          }}
-                          className="px-2.5 py-1 text-xs rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200 transition-colors cursor-pointer inline-flex items-center gap-1"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Lihat</span>
-                        </button>
-                      </td>
-                      <td className="py-3.5 px-4 text-right text-slate-500 text-xs">
-                        {new Date(sub.completed_at).toLocaleTimeString("id-ID", {
+                      <td className="py-3.5 px-4 text-right text-slate-500 text-xs font-mono">
+                        {new Date(sub.completed_at).toLocaleString("id-ID", {
                           hour: "2-digit",
                           minute: "2-digit",
+                          day: "numeric",
+                          month: "short",
                         })}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* Tombol Review Jawaban */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              sounds.playSelect();
+                              setSelectedSubmission(sub);
+                            }}
+                            className="px-2.5 py-1 text-xs rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200 transition-colors cursor-pointer inline-flex items-center gap-1"
+                            title="Lihat lembar jawaban murid"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Review</span>
+                          </button>
+
+                          {/* Tombol Hapus Hasil Testing */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              sounds.playSelect();
+                              setSubmissionToDelete(sub);
+                            }}
+                            className="p-1.5 text-xs rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold border border-rose-200 transition-colors cursor-pointer inline-flex items-center"
+                            title="Hapus data nilai ini"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -384,6 +672,74 @@ function QuizResultsContent() {
           </table>
         </div>
       </div>
+
+      {/* Modal Konfirmasi Hapus 1 Murid */}
+      {submissionToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl border border-slate-200">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-1">
+              Hapus Nilai Murid?
+            </h3>
+            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+              Apakah Anda yakin ingin menghapus data nilai <strong>{submissionToDelete.student_name}</strong> (Kelas {submissionToDelete.student_class})? Tindakan ini cocok untuk membersihkan data testing.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setSubmissionToDelete(null)}
+                className="flex-1 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="flex-1 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-60 cursor-pointer"
+              >
+                {isDeleting ? "Menghapus..." : "Ya, Hapus"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Reset Semua Hasil */}
+      {showClearAllModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-slate-200">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 mb-1">
+              Reset / Bersihkan Semua Nilai?
+            </h3>
+            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+              Tindakan ini akan menghapus seluruh data nilai (<strong>{submissions.length} lembar pengerjaan</strong>) pada kuis ini. Cocok untuk membersihkan data testing sebelum kuis dibagikan ke murid yang sebenarnya.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowClearAllModal(false)}
+                className="flex-1 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmClearAll}
+                className="flex-1 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-60 cursor-pointer"
+              >
+                {isDeleting ? "Membersihkan..." : "Ya, Bersihkan Semua"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Review Jawaban Siswa untuk Guru */}
       {selectedSubmission && (
@@ -435,18 +791,35 @@ function QuizResultsContent() {
             <div className="p-5 md:p-6 overflow-y-auto flex-1 space-y-4">
               {quiz?.questions && quiz.questions.length > 0 ? (
                 quiz.questions.map((q, idx) => {
-                  const studentAns = selectedSubmission.answers?.find(
-                    (a) => a.question_id === q.id
-                  );
+                  // Fallback matching: by question_id -> question_index -> array index
+                  const studentAns =
+                    selectedSubmission.answers?.find((a) => a.question_id === q.id) ||
+                    selectedSubmission.answers?.find((a) => a.question_index === idx) ||
+                    selectedSubmission.answers?.[idx];
+
                   const isCorrect = studentAns?.is_correct;
-                  const selectedOpt = q.options.find(
-                    (o) => o.id === studentAns?.selected_option_id
-                  );
+
+                  // Fallback option matching: by option id -> option text -> option index
+                  const selectedOpt =
+                    q.options.find((o) => o.id === studentAns?.selected_option_id) ||
+                    q.options.find(
+                      (o) =>
+                        o.option_text.trim().toLowerCase() ===
+                        studentAns?.selected_option_text?.trim().toLowerCase()
+                    ) ||
+                    (studentAns?.selected_option_index !== undefined
+                      ? q.options[studentAns.selected_option_index]
+                      : undefined);
+
                   const correctOpt = q.options.find((o) => o.is_correct);
+
+                  const answerDisplay = selectedOpt
+                    ? selectedOpt.option_text
+                    : studentAns?.selected_option_text || "(Tidak dijawab / Kosong)";
 
                   return (
                     <div
-                      key={q.id}
+                      key={q.id || `q-${idx}`}
                       className={`p-4 rounded-2xl border text-xs md:text-sm ${
                         isCorrect
                           ? "bg-emerald-50/40 border-emerald-200"
@@ -480,13 +853,21 @@ function QuizResultsContent() {
                       )}
 
                       <div className="space-y-1 mt-2 pt-2 border-t border-slate-200/60 text-xs">
-                        <p className={isCorrect ? "text-emerald-700 font-semibold" : "text-rose-700 font-semibold"}>
-                          Jawaban Murid: {selectedOpt ? selectedOpt.option_text : "(Tidak dijawab / Kosong)"}
+                        <p
+                          className={
+                            isCorrect
+                              ? "text-emerald-700 font-semibold"
+                              : "text-rose-700 font-semibold"
+                          }
+                        >
+                          Jawaban Murid: {answerDisplay}
                         </p>
                         {!isCorrect && correctOpt && (
                           <p className="text-slate-600">
                             Kunci Jawaban Benar:{" "}
-                            <strong className="text-slate-900 font-bold">{correctOpt.option_text}</strong>
+                            <strong className="text-slate-900 font-bold">
+                              {correctOpt.option_text}
+                            </strong>
                           </p>
                         )}
                       </div>

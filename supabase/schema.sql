@@ -56,8 +56,13 @@ create table if not exists public.submissions (
   correct_answers int default 0 not null,
   tab_switch_count int default 0 not null,
   started_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  completed_at timestamp with time zone default timezone('utc'::text, now()) not null
+  completed_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  answers_data jsonb
 );
+
+-- Pastikan kolom answers_data ada jika tabel sudah dibuat sebelumnya
+alter table public.submissions add column if not exists answers_data jsonb;
+
 
 -- 5. TABEL DETAIL JAWABAN MURID (OPSIONAL UNTUK ANALISIS)
 create table if not exists public.submission_answers (

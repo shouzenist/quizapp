@@ -326,35 +326,86 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
         .single();
 
       if (!quizError && quizResult) {
-        // If this was an update, delete old questions to recreate cleanly
-        if (hasValidId) {
-          await supabase.from("questions").delete().eq("quiz_id", quizResult.id);
-        }
-
-        // Insert fresh questions & options
+        // Synchronize questions safely without wiping foreign keys and submissions
         if (quizData.questions && quizData.questions.length > 0) {
+          let existingQIds = new Set<string>();
+          if (hasValidId) {
+            const { data: existingQ } = await supabase
+              .from("questions")
+              .select("id")
+              .eq("quiz_id", quizResult.id);
+            if (existingQ) {
+              existingQIds = new Set(existingQ.map((row: any) => row.id));
+            }
+          }
+
           for (let i = 0; i < quizData.questions.length; i++) {
             const q = quizData.questions[i];
-            const { data: questionResult } = await supabase
-              .from("questions")
-              .insert({
-                quiz_id: quizResult.id,
-                question_text: q.question_text,
-                image_url: q.image_url || null,
-                points: q.points || 10,
-                order_index: i,
-              })
-              .select()
-              .single();
+            let questionId = q.id;
 
-            if (questionResult && q.options) {
-              const optionsPayload = q.options.map((opt) => ({
-                question_id: questionResult.id,
-                option_text: opt.option_text,
-                is_correct: opt.is_correct,
-              }));
-              await supabase.from("options").insert(optionsPayload);
+            if (isValidUuid(q.id) && existingQIds.has(q.id)) {
+              // Update existing question
+              await supabase
+                .from("questions")
+                .update({
+                  question_text: q.question_text,
+                  image_url: q.image_url || null,
+                  points: q.points || 10,
+                  order_index: i,
+                })
+                .eq("id", q.id);
+              existingQIds.delete(q.id);
+            } else {
+              // Insert new question
+              const { data: newQ } = await supabase
+                .from("questions")
+                .insert({
+                  quiz_id: quizResult.id,
+                  question_text: q.question_text,
+                  image_url: q.image_url || null,
+                  points: q.points || 10,
+                  order_index: i,
+                })
+                .select()
+                .single();
+              if (newQ) questionId = newQ.id;
             }
+
+            if (questionId && isValidUuid(questionId) && q.options) {
+              const { data: existingOpts } = await supabase
+                .from("options")
+                .select("id")
+                .eq("question_id", questionId);
+              const existingOptIds = new Set((existingOpts || []).map((o: any) => o.id));
+
+              for (const opt of q.options) {
+                if (isValidUuid(opt.id) && existingOptIds.has(opt.id)) {
+                  await supabase
+                    .from("options")
+                    .update({
+                      option_text: opt.option_text,
+                      is_correct: opt.is_correct,
+                    })
+                    .eq("id", opt.id);
+                  existingOptIds.delete(opt.id);
+                } else {
+                  await supabase.from("options").insert({
+                    question_id: questionId,
+                    option_text: opt.option_text,
+                    is_correct: opt.is_correct,
+                  });
+                }
+              }
+
+              if (existingOptIds.size > 0) {
+                await supabase.from("options").delete().in("id", Array.from(existingOptIds));
+              }
+            }
+          }
+
+          // Delete only questions that were explicitly removed by the teacher
+          if (existingQIds.size > 0) {
+            await supabase.from("questions").delete().in("id", Array.from(existingQIds));
           }
         }
 
@@ -439,23 +490,36 @@ export async function submitQuizAnswers(params: {
 }): Promise<Submission> {
   if (isSupabaseConfigured && isValidUuid(params.quiz_id)) {
     try {
-      const { data: subData, error } = await supabase
+      const insertPayload: Record<string, any> = {
+        quiz_id: params.quiz_id,
+        student_name: params.student_name,
+        student_class: params.student_class,
+        score: params.score,
+        total_questions: params.total_questions,
+        correct_answers: params.correct_answers,
+        tab_switch_count: params.tab_switch_count,
+        started_at: params.started_at,
+        completed_at: params.completed_at,
+        answers_data: params.answers,
+      };
+
+      let subData: any = null;
+      const { data: inserted, error: insertErr } = await supabase
         .from("submissions")
-        .insert({
-          quiz_id: params.quiz_id,
-          student_name: params.student_name,
-          student_class: params.student_class,
-          score: params.score,
-          total_questions: params.total_questions,
-          correct_answers: params.correct_answers,
-          tab_switch_count: params.tab_switch_count,
-          started_at: params.started_at,
-          completed_at: params.completed_at,
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
-      if (!error && subData) {
+      if (!insertErr && inserted) {
+        subData = inserted;
+      } else if (insertErr && insertErr.message?.includes("answers_data")) {
+        // If column answers_data does not exist yet in Supabase, fallback without it
+        delete insertPayload.answers_data;
+        const retry = await supabase.from("submissions").insert(insertPayload).select().single();
+        if (!retry.error) subData = retry.data;
+      }
+
+      if (subData) {
         if (params.answers.length > 0) {
           const detailRows = params.answers
             .filter((a) => isValidUuid(a.question_id))
@@ -469,9 +533,12 @@ export async function submitQuizAnswers(params: {
             await supabase.from("submission_answers").insert(detailRows);
           }
         }
-        return subData as Submission;
+        return {
+          ...subData,
+          answers: params.answers,
+          answers_data: params.answers,
+        } as Submission;
       }
-      console.error("Supabase insert submission error:", error);
     } catch (e) {
       console.warn("Supabase submission failed, falling back to local storage:", e);
     }
@@ -481,6 +548,7 @@ export async function submitQuizAnswers(params: {
   const newSub: Submission = {
     id: "sub-" + Date.now(),
     ...params,
+    answers_data: params.answers,
   };
   submissions.unshift(newSub);
   saveLocalSubmissions(submissions);
@@ -497,7 +565,13 @@ export async function getSubmissionsByQuizId(quizId: string): Promise<Submission
         .order("score", { ascending: false });
 
       if (!error && data) {
-        return data as Submission[];
+        const processed = data.map((sub: any) => ({
+          ...sub,
+          answers: (sub.answers_data && Array.isArray(sub.answers_data) && sub.answers_data.length > 0)
+            ? sub.answers_data
+            : sub.answers,
+        }));
+        return processed as Submission[];
       }
       console.error("Supabase getSubmissionsByQuizId error:", error);
     } catch (e) {
@@ -509,4 +583,225 @@ export async function getSubmissionsByQuizId(quizId: string): Promise<Submission
   return submissions
     .filter((s) => s.quiz_id === quizId)
     .sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Hapus satu hasil pengerjaan murid tertentu
+ */
+export async function deleteSubmission(submissionId: string, quizId?: string): Promise<boolean> {
+  let success = false;
+  if (isSupabaseConfigured && isValidUuid(submissionId)) {
+    try {
+      const { error } = await supabase.from("submissions").delete().eq("id", submissionId);
+      if (!error) {
+        success = true;
+      } else {
+        console.error("Supabase delete submission error:", error);
+      }
+    } catch (e) {
+      console.warn("Supabase delete submission failed:", e);
+    }
+  }
+
+  const submissions = getLocalSubmissions();
+  const filtered = submissions.filter((s) => s.id !== submissionId);
+  if (filtered.length !== submissions.length) {
+    saveLocalSubmissions(filtered);
+    success = true;
+  }
+  return success;
+}
+
+/**
+ * Hapus seluruh hasil pengerjaan pada kuis tertentu (misal untuk reset data testing)
+ */
+export async function clearQuizSubmissions(quizId: string): Promise<boolean> {
+  let success = false;
+  if (isSupabaseConfigured && isValidUuid(quizId)) {
+    try {
+      const { error } = await supabase.from("submissions").delete().eq("quiz_id", quizId);
+      if (!error) {
+        success = true;
+      } else {
+        console.error("Supabase clear submissions error:", error);
+      }
+    } catch (e) {
+      console.warn("Supabase clear submissions failed:", e);
+    }
+  }
+
+  const submissions = getLocalSubmissions();
+  const filtered = submissions.filter((s) => s.quiz_id !== quizId);
+  saveLocalSubmissions(filtered);
+  return true;
+}
+
+/**
+ * Sinkronisasi ulang dan hitung kembali nilai murid berdasarkan kunci jawaban terbaru
+ */
+export async function recalculateQuizSubmissions(quizId: string): Promise<{
+  success: boolean;
+  count: number;
+  message: string;
+  submissions: Submission[];
+}> {
+  // 1. Ambil kuis terbaru beserta butir soal dan kunci jawaban aktif
+  const quiz = await getQuizById(quizId);
+  if (!quiz || !quiz.questions || quiz.questions.length === 0) {
+    return {
+      success: false,
+      count: 0,
+      message: "Data kuis atau butir soal tidak ditemukan.",
+      submissions: [],
+    };
+  }
+
+  // 2. Ambil seluruh submission murid
+  const currentSubs = await getSubmissionsByQuizId(quizId);
+  if (currentSubs.length === 0) {
+    return {
+      success: true,
+      count: 0,
+      message: "Belum ada data pengerjaan murid yang perlu disinkronkan.",
+      submissions: [],
+    };
+  }
+
+  const totalPossiblePoints = quiz.questions.reduce((sum, q) => sum + (q.points || 10), 0);
+  const updatedSubs: Submission[] = [];
+
+  for (const sub of currentSubs) {
+    let newScore = 0;
+    let newCorrect = 0;
+    const existingAnswers = sub.answers || sub.answers_data || [];
+
+    const reEvaluatedAnswers: StudentAnswer[] = quiz.questions.map((q, qIdx) => {
+      // Cari jawaban murid: cocokkan by question_id ATAU by urutan index soal
+      const ans =
+        existingAnswers.find((a) => a.question_id === q.id) ||
+        existingAnswers.find((a) => a.question_index === qIdx) ||
+        existingAnswers[qIdx];
+
+      const currentCorrectOption = q.options.find((opt) => opt.is_correct);
+
+      let isCorrect = false;
+      let selectedOptionId = ans?.selected_option_id || "";
+      let selectedOptionText = ans?.selected_option_text || "";
+      const selectedOptionIndex = ans?.selected_option_index;
+
+      if (ans && currentCorrectOption) {
+        // Cocokkan 1: Melalui ID Pilihan Jawaban
+        if (ans.selected_option_id && ans.selected_option_id === currentCorrectOption.id) {
+          isCorrect = true;
+        }
+        // Cocokkan 2: Melalui Teks Pilihan Jawaban
+        else if (
+          ans.selected_option_text &&
+          ans.selected_option_text.trim().toLowerCase() === currentCorrectOption.option_text.trim().toLowerCase()
+        ) {
+          isCorrect = true;
+          selectedOptionId = currentCorrectOption.id;
+        }
+        // Cocokkan 3: Cari option pada soal saat ini yang ID-nya sama
+        else if (ans.selected_option_id) {
+          const matchedOpt = q.options.find((opt) => opt.id === ans.selected_option_id);
+          if (matchedOpt && matchedOpt.is_correct) {
+            isCorrect = true;
+          }
+        }
+        // Cocokkan 4: Melalui Nomor Urut Pilihan (misal opsi ke-2)
+        else if (
+          ans.selected_option_index !== undefined &&
+          q.options[ans.selected_option_index]?.is_correct
+        ) {
+          isCorrect = true;
+        }
+      }
+
+      if (isCorrect) {
+        newCorrect += 1;
+        newScore += q.points || 10;
+      }
+
+      // Pastikan teks jawaban murid terisi jika belum ada
+      if (!selectedOptionText && selectedOptionId) {
+        const foundOpt = q.options.find((opt) => opt.id === selectedOptionId);
+        if (foundOpt) selectedOptionText = foundOpt.option_text;
+      }
+
+      return {
+        question_id: q.id,
+        question_index: qIdx,
+        question_text: q.question_text,
+        selected_option_id: selectedOptionId,
+        selected_option_text: selectedOptionText,
+        selected_option_index: selectedOptionIndex,
+        is_correct: isCorrect,
+      };
+    });
+
+    const normalizedScore = totalPossiblePoints > 0
+      ? Math.round((newScore / totalPossiblePoints) * 100)
+      : 0;
+
+    const updatedSub: Submission = {
+      ...sub,
+      score: normalizedScore,
+      correct_answers: newCorrect,
+      total_questions: quiz.questions.length,
+      answers: reEvaluatedAnswers,
+      answers_data: reEvaluatedAnswers,
+    };
+
+    updatedSubs.push(updatedSub);
+
+    // Update di Supabase jika terkoneksi
+    if (isSupabaseConfigured && isValidUuid(sub.id)) {
+      try {
+        await supabase
+          .from("submissions")
+          .update({
+            score: normalizedScore,
+            correct_answers: newCorrect,
+            total_questions: quiz.questions.length,
+            answers_data: reEvaluatedAnswers,
+          })
+          .eq("id", sub.id);
+
+        // Update juga ke submission_answers
+        for (const ans of reEvaluatedAnswers) {
+          if (isValidUuid(ans.question_id)) {
+            await supabase
+              .from("submission_answers")
+              .upsert(
+                {
+                  submission_id: sub.id,
+                  question_id: ans.question_id,
+                  selected_option_id: isValidUuid(ans.selected_option_id) ? ans.selected_option_id : null,
+                  is_correct: ans.is_correct,
+                },
+                { onConflict: "submission_id,question_id" }
+              );
+          }
+        }
+      } catch (err) {
+        console.warn("Gagal update submission di Supabase saat rekalkulasi:", err);
+      }
+    }
+  }
+
+  // Update di Local Storage
+  const allLocal = getLocalSubmissions();
+  const updatedLocal = allLocal.map((s) => {
+    const found = updatedSubs.find((u) => u.id === s.id);
+    return found || s;
+  });
+  saveLocalSubmissions(updatedLocal);
+
+  return {
+    success: true,
+    count: updatedSubs.length,
+    message: `Berhasil menilai ulang ${updatedSubs.length} murid berdasarkan kunci jawaban terbaru!`,
+    submissions: updatedSubs,
+  };
 }
