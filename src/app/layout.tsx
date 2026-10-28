@@ -50,10 +50,10 @@ export default function RootLayout({
                 className="h-7 sm:h-8 w-auto object-contain inline-block"
               />
               <span className="text-slate-400">—</span>
-              <span className="font-medium text-slate-600 text-sm">SMP Negeri 3 Godean</span>
+              <span className="font-medium text-slate-600 text-sm">&copy; SMP Negeri 3 Godean</span>
             </div>
-            <p className="text-xs text-slate-400">
-              Mendukung Vercel & Supabase PostgreSQL
+            <p className="text-xs text-slate-400 italic">
+              &ldquo;Setiap hari adalah kesempatan baru untuk menjadi lebih baik dari kemarin.&rdquo;
             </p>
           </div>
         </footer>

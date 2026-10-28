@@ -48,7 +48,7 @@ export default function Home() {
         {/* Hero Badge */}
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-900 text-xs md:text-sm font-semibold mb-6 shadow-sm">
           <Sparkles className="w-4 h-4 text-blue-700 animate-pulse" />
-          <span>Platform Kuis Modern & Zero-Friction SMP Negeri 3 Godean</span>
+          <span>Platform Quiz Modern SMP Negeri 3 Godean</span>
         </div>
 
         {/* Hero Title */}
@@ -62,6 +62,7 @@ export default function Home() {
 
         <p className="mt-4 md:mt-6 text-slate-600 text-center max-w-2xl text-base md:text-lg leading-relaxed">
           Guru cukup membagikan kode kuis atau link. Murid hanya perlu memasukkan{" "}
+          <strong className="text-slate-900 font-semibold">Kode Quiz</strong>,{" "}
           <strong className="text-slate-900 font-semibold">Nama Lengkap</strong> dan{" "}
           <strong className="text-slate-900 font-semibold">Kelas</strong> untuk langsung mulai!
         </p>
@@ -74,7 +75,7 @@ export default function Home() {
                 <Zap className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Gabung Kuis</h2>
+                <h2 className="text-lg font-bold text-slate-900">Gabung Quis</h2>
                 <p className="text-xs text-slate-500">Masukkan kode 6 digit dari gurumu</p>
               </div>
             </div>
