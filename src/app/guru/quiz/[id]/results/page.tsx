@@ -61,7 +61,7 @@ function QuizResultsContent() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [submissionToDelete, setSubmissionToDelete] = useState<Submission | null>(null);
   const [showClearAllModal, setShowClearAllModal] = useState(false);
-  const [notification, setNotification] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [notification, setNotification] = useState<{ type: "success" | "error"; text: string; showRlsHelp?: boolean } | null>(null);
 
   const handleToggleReview = async () => {
     if (!quiz) return;
@@ -151,19 +151,30 @@ function QuizResultsContent() {
   const handleConfirmDelete = async () => {
     if (!submissionToDelete) return;
     setIsDeleting(true);
+    setNotification(null);
     try {
-      const ok = await deleteSubmission(submissionToDelete.id, quizId);
-      if (ok) {
+      const res = await deleteSubmission(submissionToDelete.id, quizId);
+      if (res.success) {
         sounds.playCorrect();
         setSubmissions((prev) => prev.filter((s) => s.id !== submissionToDelete.id));
         setNotification({
           type: "success",
-          text: `Data nilai murid "${submissionToDelete.student_name}" berhasil dihapus.`,
+          text: `Data nilai murid "${submissionToDelete.student_name}" berhasil dihapus secara permanen.`,
+        });
+      } else {
+        sounds.playWrong();
+        setNotification({
+          type: "error",
+          text: res.message || "Gagal menghapus data nilai dari database.",
+          showRlsHelp: res.rlsBlocked,
         });
       }
-    } catch {
+    } catch (err: any) {
       sounds.playWrong();
-      setNotification({ type: "error", text: "Gagal menghapus data nilai." });
+      setNotification({
+        type: "error",
+        text: err?.message || "Gagal menghapus data nilai.",
+      });
     } finally {
       setIsDeleting(false);
       setSubmissionToDelete(null);
@@ -173,17 +184,30 @@ function QuizResultsContent() {
   // Reset semua submissions
   const handleConfirmClearAll = async () => {
     setIsDeleting(true);
+    setNotification(null);
     try {
-      await clearQuizSubmissions(quizId);
-      sounds.playCorrect();
-      setSubmissions([]);
-      setNotification({
-        type: "success",
-        text: "Semua data nilai dan riwayat pengerjaan murid telah dibersihkan.",
-      });
-    } catch {
+      const res = await clearQuizSubmissions(quizId);
+      if (res.success) {
+        sounds.playCorrect();
+        setSubmissions([]);
+        setNotification({
+          type: "success",
+          text: "Semua data nilai dan riwayat pengerjaan murid telah dibersihkan secara permanen.",
+        });
+      } else {
+        sounds.playWrong();
+        setNotification({
+          type: "error",
+          text: res.message || "Gagal membersihkan data nilai.",
+          showRlsHelp: res.rlsBlocked,
+        });
+      }
+    } catch (err: any) {
       sounds.playWrong();
-      setNotification({ type: "error", text: "Gagal membersihkan data nilai." });
+      setNotification({
+        type: "error",
+        text: err?.message || "Gagal membersihkan data nilai.",
+      });
     } finally {
       setIsDeleting(false);
       setShowClearAllModal(false);
@@ -330,26 +354,43 @@ function QuizResultsContent() {
       {/* Notification Banner */}
       {notification && (
         <div
-          className={`p-4 rounded-2xl mb-6 text-xs md:text-sm font-medium flex items-center justify-between border animate-in fade-in ${
+          className={`p-4 rounded-2xl mb-6 text-xs md:text-sm font-medium flex flex-col gap-3 border animate-in fade-in ${
             notification.type === "success"
               ? "bg-emerald-50 text-emerald-800 border-emerald-200"
               : "bg-rose-50 text-rose-800 border-rose-200"
           }`}
         >
-          <div className="flex items-center gap-2.5">
-            {notification.type === "success" ? (
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
-            ) : (
-              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
-            )}
-            <span>{notification.text}</span>
+          <div className="flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5">
+              {notification.type === "success" ? (
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+              ) : (
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
+              )}
+              <span>{notification.text}</span>
+            </div>
+            <button
+              onClick={() => setNotification(null)}
+              className="p-1 hover:bg-black/5 rounded-lg text-slate-500 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            onClick={() => setNotification(null)}
-            className="p-1 hover:bg-black/5 rounded-lg text-slate-500 cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+
+          {notification.showRlsHelp && (
+            <div className="p-3.5 bg-white/95 rounded-xl border border-rose-200 text-xs text-slate-700 shadow-sm">
+              <p className="font-bold text-rose-900 mb-1 flex items-center gap-1.5">
+                <span>Panduan Solusi (Supabase SQL Editor):</span>
+              </p>
+              <p className="text-slate-600 mb-2 leading-relaxed">
+                Supabase memblokir penghapusan karena tabel memiliki Row Level Security (RLS) tanpa policy DELETE. Jalankan 2 baris perintah ini di <strong>Supabase Dashboard &gt; SQL Editor</strong>:
+              </p>
+              <pre className="p-3 bg-slate-900 text-emerald-400 rounded-lg text-[11px] font-mono overflow-x-auto select-all leading-relaxed border border-slate-800">
+{`create policy "Allow all for submissions" on public.submissions for all using (true) with check (true);
+create policy "Allow all for submission_answers" on public.submission_answers for all using (true) with check (true);`}
+              </pre>
+            </div>
+          )}
         </div>
       )}
 

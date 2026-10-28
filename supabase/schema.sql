@@ -117,7 +117,9 @@ create policy "Allow all for quizzes" on public.quizzes for all using (true) wit
 create policy "Allow all for questions" on public.questions for all using (true) with check (true);
 create policy "Allow all for options" on public.options for all using (true) with check (true);
 create policy "Allow all for submissions" on public.submissions for all using (true) with check (true);
+create policy "Allow delete for submissions" on public.submissions for delete using (true);
 create policy "Allow all for submission_answers" on public.submission_answers for all using (true) with check (true);
+create policy "Allow delete for submission_answers" on public.submission_answers for delete using (true);
 create policy "Allow all for app_settings" on public.app_settings for all using (true) with check (true);
 
 -- Inisialisasi password default guru jika belum ada

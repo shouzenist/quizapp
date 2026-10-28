@@ -629,55 +629,128 @@ export async function getSubmissionsByQuizId(quizId: string): Promise<Submission
     .sort((a, b) => b.score - a.score);
 }
 
+export interface DeleteResult {
+  success: boolean;
+  message?: string;
+  rlsBlocked?: boolean;
+}
+
 /**
  * Hapus satu hasil pengerjaan murid tertentu
  */
-export async function deleteSubmission(submissionId: string, quizId?: string): Promise<boolean> {
-  let success = false;
+export async function deleteSubmission(submissionId: string, quizId?: string): Promise<DeleteResult> {
   if (isSupabaseConfigured && isValidUuid(submissionId)) {
     try {
-      const { error } = await supabase.from("submissions").delete().eq("id", submissionId);
-      if (!error) {
-        success = true;
-      } else {
-        console.error("Supabase delete submission error:", error);
+      // 1. Hapus relasi jawaban murid (submission_answers) terlebih dahulu
+      // agar tidak terbentur Foreign Key constraint jika cascade delete belum aktif di Supabase
+      const { error: ansError } = await supabase
+        .from("submission_answers")
+        .delete()
+        .eq("submission_id", submissionId);
+
+      if (ansError) {
+        console.warn("Supabase delete submission_answers warning:", ansError);
       }
-    } catch (e) {
-      console.warn("Supabase delete submission failed:", e);
+
+      // 2. Hapus data utama di tabel submissions dan minta balasan ID yang terhapus
+      const { data, error } = await supabase
+        .from("submissions")
+        .delete()
+        .eq("id", submissionId)
+        .select("id");
+
+      if (error) {
+        console.error("Supabase delete submission error:", error);
+        return {
+          success: false,
+          message: `Gagal menghapus dari database: ${error.message}`,
+        };
+      }
+
+      // Jika data kosong, berarti RLS di Supabase menolak operasi DELETE untuk role anon
+      if (!data || data.length === 0) {
+        console.warn("Supabase delete returned 0 rows. RLS policy might be missing.");
+        return {
+          success: false,
+          rlsBlocked: true,
+          message: "Database Supabase menolak penghapusan data (Kebijakan RLS untuk DELETE belum aktif di tabel 'submissions'). Silakan jalankan script SQL izin hapus.",
+        };
+      }
+    } catch (e: any) {
+      console.error("Supabase delete submission exception:", e);
+      return {
+        success: false,
+        message: e?.message || "Terjadi kesalahan saat menghapus data di Supabase.",
+      };
     }
   }
 
+  // Hapus juga dari LocalStorage jika ada
   const submissions = getLocalSubmissions();
   const filtered = submissions.filter((s) => s.id !== submissionId);
-  if (filtered.length !== submissions.length) {
-    saveLocalSubmissions(filtered);
-    success = true;
-  }
-  return success;
+  saveLocalSubmissions(filtered);
+
+  return { success: true };
 }
 
 /**
  * Hapus seluruh hasil pengerjaan pada kuis tertentu (misal untuk reset data testing)
  */
-export async function clearQuizSubmissions(quizId: string): Promise<boolean> {
-  let success = false;
+export async function clearQuizSubmissions(quizId: string): Promise<DeleteResult> {
   if (isSupabaseConfigured && isValidUuid(quizId)) {
     try {
-      const { error } = await supabase.from("submissions").delete().eq("quiz_id", quizId);
-      if (!error) {
-        success = true;
-      } else {
-        console.error("Supabase clear submissions error:", error);
+      // 1. Ambil semua ID submission milik kuis ini
+      const { data: subs, error: fetchErr } = await supabase
+        .from("submissions")
+        .select("id")
+        .eq("quiz_id", quizId);
+
+      if (!fetchErr && subs && subs.length > 0) {
+        const subIds = subs.map((s) => s.id);
+        // Hapus child answers terlebih dahulu
+        await supabase
+          .from("submission_answers")
+          .delete()
+          .in("submission_id", subIds);
       }
-    } catch (e) {
-      console.warn("Supabase clear submissions failed:", e);
+
+      // 2. Hapus seluruh submissions milik kuis ini
+      const { data, error } = await supabase
+        .from("submissions")
+        .delete()
+        .eq("quiz_id", quizId)
+        .select("id");
+
+      if (error) {
+        console.error("Supabase clear submissions error:", error);
+        return {
+          success: false,
+          message: `Gagal membersihkan data di Supabase: ${error.message}`,
+        };
+      }
+
+      if (!data || data.length === 0) {
+        console.warn("Supabase clear submissions returned 0 rows.");
+        return {
+          success: false,
+          rlsBlocked: true,
+          message: "Database Supabase menolak pembersihan data (Kebijakan RLS belum mengizinkan DELETE).",
+        };
+      }
+    } catch (e: any) {
+      console.error("Supabase clear submissions exception:", e);
+      return {
+        success: false,
+        message: e?.message || "Terjadi kesalahan saat membersihkan data di Supabase.",
+      };
     }
   }
 
   const submissions = getLocalSubmissions();
   const filtered = submissions.filter((s) => s.quiz_id !== quizId);
   saveLocalSubmissions(filtered);
-  return true;
+
+  return { success: true };
 }
 
 /**
