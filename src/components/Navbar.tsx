@@ -50,7 +50,7 @@ export default function Navbar() {
         </Link>
 
         {/* Navigation Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Status Badge */}
           <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-slate-50 text-slate-600 border-slate-200">
             <Database className="w-3.5 h-3.5 text-blue-600" />
@@ -61,42 +61,44 @@ export default function Navbar() {
           <button
             onClick={toggleSound}
             title={soundActive ? "Nonaktifkan Suara" : "Aktifkan Suara"}
-            className="p-2 rounded-xl text-slate-500 hover:text-blue-700 hover:bg-slate-100 transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-blue-700 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             {soundActive ? (
-              <Volume2 className="w-5 h-5 text-blue-700" />
+              <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-700" />
             ) : (
-              <VolumeX className="w-5 h-5 text-slate-400" />
+              <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
             )}
           </button>
 
           {/* Role Navigation */}
-          <nav className="flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60">
+          <nav className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60 shadow-xs">
             <Link
               href="/"
               onClick={() => sounds.playSelect()}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap h-8 transition-all ${
                 pathname === "/" || pathname?.startsWith("/play")
                   ? "bg-white text-blue-900 shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              <GraduationCap className="w-3.5 h-3.5" />
+              <GraduationCap className="w-3.5 h-3.5 flex-shrink-0" />
               <span>Murid</span>
             </Link>
 
             <Link
               href="/guru"
               onClick={() => sounds.playSelect()}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap h-8 transition-all ${
                 pathname?.startsWith("/guru")
                   ? "bg-gradient-to-r from-blue-900 via-blue-700 to-sky-600 text-white shadow-sm shadow-blue-900/20"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Portal Guru</span>
-              <Lock className="w-3 h-3 opacity-60 ml-0.5" />
+              <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>
+                <span className="hidden sm:inline">Portal </span>Guru
+              </span>
+              <Lock className="w-3 h-3 opacity-60 flex-shrink-0 ml-0.5" />
             </Link>
           </nav>
         </div>
