@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import * as XLSX from "xlsx";
+import XLSX from "xlsx-js-style";
 import {
   ArrowLeft,
   Download,
@@ -226,42 +226,160 @@ function QuizResultsContent() {
     ? Math.min(...filteredAndSortedSubmissions.map((s) => s.score))
     : 0;
 
-  // Export to Excel function
+  // Export to Excel function (Per-kelas per-sheet, urut by nama, header abu-abu teks putih)
   const handleExportExcel = () => {
     sounds.playSelect();
-    if (filteredAndSortedSubmissions.length === 0) {
+    if (submissions.length === 0) {
       alert("Belum ada data pengerjaan murid untuk diekspor.");
       return;
     }
 
-    const excelData = filteredAndSortedSubmissions.map((sub, idx) => ({
-      No: idx + 1,
-      "Nama Murid": sub.student_name,
-      Kelas: sub.student_class,
-      "Nilai Akhir": sub.score,
-      "Jawaban Benar": sub.correct_answers,
-      "Total Soal": sub.total_questions,
-      "Pindah Tab (Anti-Curang)": `${sub.tab_switch_count}x`,
-      "Waktu Selesai": new Date(sub.completed_at).toLocaleString("id-ID", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }),
-    }));
-
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    worksheet["!cols"] = [
-      { wch: 6 },
-      { wch: 28 },
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 15 },
-      { wch: 12 },
-      { wch: 24 },
-      { wch: 22 },
-    ];
-
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Nilai");
+
+    // 1. Style Header: Abu-abu (Slate-600 #4B5563) dengan teks Putih (#FFFFFF Bold)
+    const headerStyle = {
+      fill: {
+        patternType: "solid",
+        fgColor: { rgb: "4B5563" },
+      },
+      font: {
+        name: "Calibri",
+        sz: 11,
+        bold: true,
+        color: { rgb: "FFFFFF" },
+      },
+      alignment: {
+        horizontal: "center",
+        vertical: "center",
+      },
+      border: {
+        top: { style: "thin", color: { rgb: "374151" } },
+        bottom: { style: "thin", color: { rgb: "374151" } },
+        left: { style: "thin", color: { rgb: "374151" } },
+        right: { style: "thin", color: { rgb: "374151" } },
+      },
+    };
+
+    // Style Sel Data
+    const dataCellStyle = (align: "left" | "center" = "center", isBold: boolean = false) => ({
+      font: {
+        name: "Calibri",
+        sz: 10,
+        bold: isBold,
+        color: { rgb: "1F2937" },
+      },
+      alignment: {
+        horizontal: align,
+        vertical: "center",
+      },
+      border: {
+        top: { style: "thin", color: { rgb: "E5E7EB" } },
+        bottom: { style: "thin", color: { rgb: "E5E7EB" } },
+        left: { style: "thin", color: { rgb: "E5E7EB" } },
+        right: { style: "thin", color: { rgb: "E5E7EB" } },
+      },
+    });
+
+    // 2. Tentukan data pengerjaan yang diekspor (semua kelas atau kelas yang difilter jika dipilih spesifik)
+    const dataToExport = selectedClass !== "ALL"
+      ? submissions.filter((s) => s.student_class === selectedClass)
+      : submissions;
+
+    // Kelompokkan data per kelas
+    const classGroups: Record<string, Submission[]> = {};
+    dataToExport.forEach((sub) => {
+      const cls = (sub.student_class || "Umum").trim();
+      if (!classGroups[cls]) {
+        classGroups[cls] = [];
+      }
+      classGroups[cls].push(sub);
+    });
+
+    // Urutkan nama kelas
+    const sortedClassNames = Object.keys(classGroups).sort((a, b) =>
+      a.localeCompare(b, "id", { numeric: true, sensitivity: "base" })
+    );
+
+    const usedSheetNames = new Set<string>();
+
+    // 3. Buat Sheet tersendiri untuk setiap kelas
+    sortedClassNames.forEach((className) => {
+      const classSubs = classGroups[className];
+
+      // Syarat 1: Selalu urutkan by nama Murid (A-Z)
+      const sortedByStudentName = [...classSubs].sort((a, b) =>
+        a.student_name.trim().localeCompare(b.student_name.trim(), "id", { sensitivity: "base" })
+      );
+
+      // Susun baris data tabel
+      const tableRows = sortedByStudentName.map((sub, idx) => ({
+        "No": idx + 1,
+        "Nama Murid": sub.student_name,
+        "Kelas": sub.student_class || className,
+        "Nilai Akhir": sub.score,
+        "Jawaban Benar": sub.correct_answers,
+        "Total Soal": sub.total_questions,
+        "Pindah Tab (Anti-Curang)": `${sub.tab_switch_count}x`,
+        "Waktu Selesai": new Date(sub.completed_at).toLocaleString("id-ID", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }),
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(tableRows);
+
+      // Atur lebar kolom
+      worksheet["!cols"] = [
+        { wch: 6 },  // No
+        { wch: 30 }, // Nama Murid
+        { wch: 14 }, // Kelas
+        { wch: 14 }, // Nilai Akhir
+        { wch: 16 }, // Jawaban Benar
+        { wch: 14 }, // Total Soal
+        { wch: 24 }, // Pindah Tab (Anti-Curang)
+        { wch: 22 }, // Waktu Selesai
+      ];
+
+      // Atur tinggi baris header agar proporsional
+      worksheet["!rows"] = [{ hpt: 26 }];
+
+      // Terapkan styling ke Header (Row 1: Abu-abu & teks putih) dan Sel Data
+      const range = XLSX.utils.decode_range(worksheet["!ref"] || "A1:H1");
+
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!worksheet[cellAddress]) continue;
+
+          if (R === 0) {
+            // Header Row: Abu-abu gelap dengan teks putih
+            worksheet[cellAddress].s = headerStyle;
+          } else {
+            // Data Rows: Rata kiri untuk nama murid, tengah untuk lainnya
+            const isNameCol = C === 1;
+            const isScoreCol = C === 3;
+            worksheet[cellAddress].s = dataCellStyle(
+              isNameCol ? "left" : "center",
+              isScoreCol
+            );
+          }
+        }
+      }
+
+      // Bersihkan nama sheet (Max 31 karakter & hilangkan karakter tidak diizinkan: \ / ? * [ ] :)
+      let cleanSheetName = className.replace(/[\\/?*[\]:]/g, " ").trim() || "Kelas";
+      cleanSheetName = cleanSheetName.slice(0, 31);
+      let finalSheetName = cleanSheetName;
+      let counter = 1;
+      while (usedSheetNames.has(finalSheetName.toLowerCase())) {
+        const suffix = ` (${counter})`;
+        finalSheetName = cleanSheetName.slice(0, 31 - suffix.length) + suffix;
+        counter++;
+      }
+      usedSheetNames.add(finalSheetName.toLowerCase());
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, finalSheetName);
+    });
 
     const safeTitle = (quiz?.title || "Kuis").replace(/[^a-zA-Z0-9]/g, "_");
     XLSX.writeFile(workbook, `Rekap_Nilai_${safeTitle}.xlsx`);
