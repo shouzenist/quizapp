@@ -16,7 +16,7 @@ import {
   Award,
   Puzzle,
 } from "lucide-react";
-import { saveQuiz } from "@/lib/quizStore";
+import { saveQuiz, resolveQuizType } from "@/lib/quizStore";
 import { Quiz, Question, Option, QuizType } from "@/lib/types";
 import { sounds } from "@/lib/sound";
 import ImageUploader, { compressImage } from "@/components/ImageUploader";

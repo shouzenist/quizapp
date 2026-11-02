@@ -16,7 +16,7 @@ import {
   Sparkles,
   Puzzle,
 } from "lucide-react";
-import { getQuizById, saveQuiz } from "@/lib/quizStore";
+import { getQuizById, saveQuiz, resolveQuizType } from "@/lib/quizStore";
 import { Quiz, Question, Option, QuizType } from "@/lib/types";
 import { sounds } from "@/lib/sound";
 import ImageUploader, { compressImage } from "@/components/ImageUploader";
@@ -76,7 +76,7 @@ function EditQuizContent() {
       if (!data) {
         setNotFound(true);
       } else {
-        const qType: QuizType = data.quiz_type || "multiple_choice";
+        const qType: QuizType = resolveQuizType(data);
         setQuizType(qType);
         setTitle(data.title);
         setDescription(data.description || "");
@@ -555,19 +555,6 @@ function EditQuizContent() {
       </div>
 
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          {quizType === "match_up" ? (
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 flex items-center gap-1.5 border border-purple-200">
-              <Puzzle className="w-3.5 h-3.5 text-purple-600" />
-              <span>Model Latihan: Match-Up (Mencocokkan Gambar & Tulisan)</span>
-            </span>
-          ) : (
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 flex items-center gap-1.5 border border-blue-200">
-              <CheckCircle className="w-3.5 h-3.5 text-blue-600" />
-              <span>Model Latihan: Pilihan Ganda</span>
-            </span>
-          )}
-        </div>
         <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">
           Edit Kuis: {title}
         </h1>
@@ -576,6 +563,109 @@ function EditQuizContent() {
             ? "Ubah judul, opsi batas waktu, pasangan gambar, dan label teks jawaban yang cocok."
             : "Ubah judul, opsi batas waktu, teks soal, atau pasang gambar pendukung."}
         </p>
+      </div>
+
+      {/* Quiz Type Selector Card */}
+      <div className="mb-6 p-5 md:p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+              Model & Jenis Latihan Soal
+            </span>
+            <p className="text-xs text-slate-500">
+              Pilih model latihan soal untuk kuis ini.
+            </p>
+          </div>
+          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 self-start">
+            Eksklusif per Latihan
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <button
+            type="button"
+            onClick={() => {
+              sounds.playSelect();
+              setQuizType("multiple_choice");
+            }}
+            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
+              quizType === "multiple_choice"
+                ? "bg-blue-50/70 border-blue-500 ring-2 ring-blue-200 shadow-sm"
+                : "bg-slate-50/70 hover:bg-slate-100/70 border-slate-200 text-slate-700"
+            }`}
+          >
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                quizType === "multiple_choice"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-200 text-slate-600"
+              }`}
+            >
+              <CheckCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-slate-900">Pilihan Ganda</span>
+                {quizType === "multiple_choice" && (
+                  <span className="text-[10px] bg-blue-600 text-white font-extrabold px-1.5 py-0.5 rounded-md">
+                    AKTIF
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Model standar pilihan A, B, C, D dengan 1 kunci jawaban benar.
+              </p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              sounds.playSelect();
+              setQuizType("match_up");
+              // If matchUpPairs is empty, convert from existing questions
+              if (matchUpPairs.length === 0 || matchUpPairs.every(p => !p.text && !p.image_url)) {
+                if (questions.length > 0) {
+                  const converted = questions.map((q, idx) => ({
+                    id: q.id || `pair-${idx + 1}`,
+                    image_url: q.image_url || "",
+                    text: (q.question_text || q.options?.[0]?.option_text || "").trim(),
+                    points: q.points || 10,
+                  }));
+                  setMatchUpPairs(converted);
+                }
+              }
+            }}
+            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
+              quizType === "match_up"
+                ? "bg-purple-50/70 border-purple-500 ring-2 ring-purple-200 shadow-sm"
+                : "bg-slate-50/70 hover:bg-slate-100/70 border-slate-200 text-slate-700"
+            }`}
+          >
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                quizType === "match_up"
+                  ? "bg-purple-600 text-white"
+                  : "bg-slate-200 text-slate-600"
+              }`}
+            >
+              <Puzzle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-slate-900">Match-Up Gambar & Tulisan</span>
+                {quizType === "match_up" && (
+                  <span className="text-[10px] bg-purple-600 text-white font-extrabold px-1.5 py-0.5 rounded-md">
+                    AKTIF
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Murid mencocokkan gambar di sisi kiri dengan tulisan jawaban di sisi kanan.
+              </p>
+            </div>
+          </button>
+        </div>
       </div>
 
       {errorMsg && (

@@ -34,6 +34,7 @@ import {
   deleteSubmission,
   clearQuizSubmissions,
   recalculateQuizSubmissions,
+  resolveQuizType,
 } from "@/lib/quizStore";
 import { Quiz, Submission } from "@/lib/types";
 import { sounds } from "@/lib/sound";
@@ -991,7 +992,7 @@ create policy "Allow all for submission_answers" on public.submission_answers fo
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <p className="font-bold text-slate-900 leading-snug">
-                          {quiz?.quiz_type === "match_up"
+                          {resolveQuizType(quiz) === "match_up"
                             ? `Pasangan #${idx + 1}`
                             : `${idx + 1}. ${q.question_text}`}
                         </p>
@@ -1025,12 +1026,12 @@ create policy "Allow all for submission_answers" on public.submission_answers fo
                               : "text-rose-700 font-semibold"
                           }
                         >
-                          {quiz?.quiz_type === "match_up" ? "Pasangan Murid: " : "Jawaban Murid: "}
+                          {resolveQuizType(quiz) === "match_up" ? "Pasangan Murid: " : "Jawaban Murid: "}
                           {answerDisplay}
                         </p>
                         {!isCorrect && (
                           <p className="text-slate-600">
-                            {quiz?.quiz_type === "match_up" ? "Pasangan yang Benar: " : "Kunci Jawaban Benar: "}
+                            {resolveQuizType(quiz) === "match_up" ? "Pasangan yang Benar: " : "Kunci Jawaban Benar: "}
                             <strong className="text-slate-900 font-bold">
                               {q.question_text || correctOpt?.option_text}
                             </strong>

@@ -25,7 +25,7 @@ import {
   Maximize2,
   X,
 } from "lucide-react";
-import { getQuizByCode, submitQuizAnswers } from "@/lib/quizStore";
+import { getQuizByCode, submitQuizAnswers, resolveQuizType } from "@/lib/quizStore";
 import { Quiz, Question, Option, StudentAnswer } from "@/lib/types";
 import { sounds } from "@/lib/sound";
 
@@ -131,6 +131,7 @@ function PlayQuizContent() {
   }, [stage, quiz]);
 
   const questions: Question[] = quiz?.questions || [];
+  const isMatchUp = resolveQuizType(quiz) === "match_up";
   const currentQuestion = questions[currentQuestionIndex];
 
   // Start the quiz
@@ -145,7 +146,7 @@ function PlayQuizContent() {
     setStartedAt(new Date().toISOString());
 
     // Initialize Match-Up cards if match_up quiz
-    if (quiz?.quiz_type === "match_up" && quiz.questions) {
+    if (isMatchUp && quiz?.questions) {
       const cards: MatchUpCard[] = quiz.questions.map((q, idx) => ({
         id: `card-${q.id || idx}`,
         text: (q.question_text || q.options?.[0]?.option_text || "").trim(),
@@ -347,7 +348,7 @@ function PlayQuizContent() {
   // Calculate score & Submit (Multiple Choice)
   const handleFinishQuiz = async () => {
     if (!quiz || isSubmitting) return;
-    if (quiz.quiz_type === "match_up") {
+    if (isMatchUp) {
       return handleFinishMatchUp();
     }
     setIsSubmitting(true);
@@ -623,7 +624,7 @@ function PlayQuizContent() {
   // STAGE 2: ACTIVE QUIZ IN PROGRESS
   if (stage === "playing") {
     // Match-Up Game Mode
-    if (quiz.quiz_type === "match_up") {
+    if (isMatchUp) {
       const matchedCount = questions.filter((q) => Boolean(matchedSlots[q.id])).length;
       const progressPercent = questions.length > 0 ? (matchedCount / questions.length) * 100 : 0;
       const allMatched = matchedCount === questions.length && questions.length > 0;
@@ -1219,7 +1220,7 @@ function PlayQuizContent() {
                     }`}
                   >
                     <p className="font-semibold text-slate-800 mb-1.5">
-                      {quiz.quiz_type === "match_up"
+                      {isMatchUp
                         ? `Pasangan #${idx + 1}`
                         : `${idx + 1}. ${q.question_text}`}
                     </p>
@@ -1238,12 +1239,12 @@ function PlayQuizContent() {
 
                     <div className="space-y-0.5 text-xs">
                       <p className={isCorrect ? "text-emerald-700 font-medium" : "text-rose-700 font-medium"}>
-                        {quiz.quiz_type === "match_up" ? "Pasanganmu: " : "Jawabanmu: "}
+                        {isMatchUp ? "Pasanganmu: " : "Jawabanmu: "}
                         {studentAns?.selected_option_text || selectedOpt?.option_text || "(Tidak dijawab)"} {isCorrect ? "✓ Benar" : "✗ Salah"}
                       </p>
                       {!isCorrect && (
                         <p className="text-slate-500">
-                          {quiz.quiz_type === "match_up" ? "Pasangan yang Benar: " : "Kunci Jawaban: "}
+                          {isMatchUp ? "Pasangan yang Benar: " : "Kunci Jawaban: "}
                           <strong className="text-slate-700">
                             {q.question_text || correctOpt?.option_text}
                           </strong>

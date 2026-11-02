@@ -22,7 +22,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { getAllQuizzes, deleteQuiz, saveQuiz, getSupabaseDiagnostic } from "@/lib/quizStore";
+import { getAllQuizzes, deleteQuiz, saveQuiz, getSupabaseDiagnostic, resolveQuizType } from "@/lib/quizStore";
 import { Quiz } from "@/lib/types";
 import { sounds } from "@/lib/sound";
 import QRCodeModal from "@/components/QRCodeModal";
@@ -293,7 +293,7 @@ export default function TeacherDashboard() {
                     <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                       {quiz.subject || "Umum"}
                     </span>
-                    {quiz.quiz_type === "match_up" ? (
+                    {resolveQuizType(quiz) === "match_up" ? (
                       <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
                         <span>🧩 Match-Up</span>
                       </span>

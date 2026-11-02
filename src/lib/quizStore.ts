@@ -1,4 +1,4 @@
-import { Quiz, Question, Submission, StudentAnswer } from "./types";
+import { Quiz, Question, Submission, StudentAnswer, QuizType } from "./types";
 import { supabase, isSupabaseConfigured, supabaseUrl } from "./supabase";
 
 export function isValidUuid(str?: string): boolean {
@@ -213,6 +213,49 @@ export async function getSupabaseDiagnostic(): Promise<{
 // PUBLIC API FOR QUIZZES & SUBMISSIONS
 // -------------------------------------------------------------
 
+export function cleanDescription(desc?: string): string {
+  if (!desc) return "";
+  return desc
+    .replace(/<!--\s*type:(match_up|multiple_choice)\s*-->/gi, "")
+    .replace(/\[quiz_type:(match_up|multiple_choice)\]/gi, "")
+    .trim();
+}
+
+export function resolveQuizType(quiz?: Partial<Quiz> | null): QuizType {
+  if (!quiz) return "multiple_choice";
+
+  // 1. Explicit valid quiz_type
+  if (quiz.quiz_type === "match_up") return "match_up";
+  if (quiz.quiz_type === "multiple_choice") return "multiple_choice";
+
+  // 2. Embedded tag in description or subject
+  const desc = quiz.description || "";
+  const subj = quiz.subject || "";
+  if (
+    desc.includes("type:match_up") ||
+    desc.includes("[quiz_type:match_up]") ||
+    subj.includes("[match_up]")
+  ) {
+    return "match_up";
+  }
+
+  // 3. Structural auto-detection:
+  // In Match-Up quizzes, each question represents an image-text pair:
+  // - each question has an image_url and exactly 1 option (the matched label, is_correct: true)
+  // - whereas multiple-choice questions have multiple options (>= 2, usually A-D)
+  if (quiz.questions && quiz.questions.length > 0) {
+    const isMatchUp = quiz.questions.every((q) => {
+      const optCount = q.options?.length || 0;
+      return optCount <= 1;
+    });
+    if (isMatchUp) {
+      return "match_up";
+    }
+  }
+
+  return "multiple_choice";
+}
+
 export async function getAllQuizzes(): Promise<Quiz[]> {
   if (isSupabaseConfigured) {
     try {
@@ -236,6 +279,8 @@ export async function getAllQuizzes(): Promise<Quiz[]> {
 
         return data.map((q) => ({
           ...q,
+          quiz_type: resolveQuizType(q),
+          description: cleanDescription(q.description),
           submissions_count: countsMap[q.id] || 0,
         }));
       }
@@ -249,6 +294,8 @@ export async function getAllQuizzes(): Promise<Quiz[]> {
   const submissions = getLocalSubmissions();
   return quizzes.map((q) => ({
     ...q,
+    quiz_type: resolveQuizType(q),
+    description: cleanDescription(q.description),
     submissions_count: submissions.filter((s) => s.quiz_id === q.id).length,
   }));
 }
@@ -266,7 +313,11 @@ export async function getQuizByCode(code: string): Promise<Quiz | null> {
         .maybeSingle();
 
       if (!error && data) {
-        return data as Quiz;
+        return {
+          ...data,
+          quiz_type: resolveQuizType(data),
+          description: cleanDescription(data.description),
+        } as Quiz;
       }
       console.warn("Supabase getQuizByCode error:", error);
     } catch (e) {
@@ -278,7 +329,12 @@ export async function getQuizByCode(code: string): Promise<Quiz | null> {
   const quiz = quizzes.find(
     (q) => q.quiz_code.toUpperCase() === cleanCode && q.is_active
   );
-  return quiz || null;
+  if (!quiz) return null;
+  return {
+    ...quiz,
+    quiz_type: resolveQuizType(quiz),
+    description: cleanDescription(quiz.description),
+  };
 }
 
 export async function getQuizById(id: string): Promise<Quiz | null> {
@@ -291,7 +347,11 @@ export async function getQuizById(id: string): Promise<Quiz | null> {
         .maybeSingle();
 
       if (!error && data) {
-        return data as Quiz;
+        return {
+          ...data,
+          quiz_type: resolveQuizType(data),
+          description: cleanDescription(data.description),
+        } as Quiz;
       }
     } catch (e) {
       console.warn("Supabase fetch failed, falling back to local storage:", e);
@@ -299,10 +359,23 @@ export async function getQuizById(id: string): Promise<Quiz | null> {
   }
 
   const quizzes = getLocalQuizzes();
-  return quizzes.find((q) => q.id === id) || null;
+  const found = quizzes.find((q) => q.id === id);
+  if (!found) return null;
+  return {
+    ...found,
+    quiz_type: resolveQuizType(found),
+    description: cleanDescription(found.description),
+  };
 }
 
 export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
+  const effectiveType: QuizType = resolveQuizType(quizData);
+  const baseDescription = cleanDescription(quizData.description);
+  // Backup tag in description for Supabase databases that have not run the latest migration
+  const persistentDescription = effectiveType === "match_up"
+    ? `${baseDescription} <!-- type:match_up -->`.trim()
+    : baseDescription;
+
   if (isSupabaseConfigured) {
     try {
       const hasValidId = isValidUuid(quizData.id);
@@ -311,7 +384,7 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
       const quizPayload: any = {
         ...(quizId ? { id: quizId } : {}),
         title: quizData.title,
-        description: quizData.description,
+        description: persistentDescription,
         subject: quizData.subject,
         quiz_code: quizData.quiz_code || Math.random().toString(36).substring(2, 8).toUpperCase(),
         is_active: quizData.is_active ?? true,
@@ -319,7 +392,7 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
         shuffle_questions: quizData.shuffle_questions ?? false,
         target_classes: quizData.target_classes || [],
         show_answer_review: quizData.show_answer_review ?? true,
-        quiz_type: quizData.quiz_type || "multiple_choice",
+        quiz_type: effectiveType,
       };
 
       let { data: quizResult, error: quizError } = await supabase
@@ -420,7 +493,12 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
           }
         }
 
-        return quizResult as Quiz;
+        return {
+          ...quizResult,
+          quiz_type: effectiveType,
+          description: baseDescription,
+          questions: quizData.questions || [],
+        } as Quiz;
       } else {
         console.error("Supabase upsert quiz error:", quizError);
       }
@@ -437,9 +515,11 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
     const updated: Quiz = {
       ...quizzes[existingIndex],
       ...quizData,
-      quiz_type: quizData.quiz_type ?? quizzes[existingIndex].quiz_type ?? "multiple_choice",
+      quiz_type: effectiveType,
+      description: baseDescription,
       target_classes: quizData.target_classes ?? quizzes[existingIndex].target_classes ?? [],
       show_answer_review: quizData.show_answer_review ?? quizzes[existingIndex].show_answer_review ?? true,
+      questions: quizData.questions || quizzes[existingIndex].questions || [],
     } as Quiz;
     quizzes[existingIndex] = updated;
     saveLocalQuizzes(quizzes);
@@ -448,10 +528,10 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
     const newQuiz: Quiz = {
       id: "quiz-" + Date.now(),
       title: quizData.title || "Kuis Baru",
-      description: quizData.description || "",
+      description: baseDescription,
       subject: quizData.subject || "Umum",
       quiz_code: quizData.quiz_code || Math.random().toString(36).substring(2, 8).toUpperCase(),
-      quiz_type: quizData.quiz_type || "multiple_choice",
+      quiz_type: effectiveType,
       is_active: quizData.is_active ?? true,
       time_limit_minutes: quizData.time_limit_minutes ?? 0,
       shuffle_questions: quizData.shuffle_questions ?? false,
