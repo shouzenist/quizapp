@@ -308,22 +308,33 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
       const hasValidId = isValidUuid(quizData.id);
       const quizId = hasValidId ? quizData.id : undefined;
 
-      const { data: quizResult, error: quizError } = await supabase
+      const quizPayload: any = {
+        ...(quizId ? { id: quizId } : {}),
+        title: quizData.title,
+        description: quizData.description,
+        subject: quizData.subject,
+        quiz_code: quizData.quiz_code || Math.random().toString(36).substring(2, 8).toUpperCase(),
+        is_active: quizData.is_active ?? true,
+        time_limit_minutes: quizData.time_limit_minutes ?? 0,
+        shuffle_questions: quizData.shuffle_questions ?? false,
+        target_classes: quizData.target_classes || [],
+        show_answer_review: quizData.show_answer_review ?? true,
+        quiz_type: quizData.quiz_type || "multiple_choice",
+      };
+
+      let { data: quizResult, error: quizError } = await supabase
         .from("quizzes")
-        .upsert({
-          ...(quizId ? { id: quizId } : {}),
-          title: quizData.title,
-          description: quizData.description,
-          subject: quizData.subject,
-          quiz_code: quizData.quiz_code || Math.random().toString(36).substring(2, 8).toUpperCase(),
-          is_active: quizData.is_active ?? true,
-          time_limit_minutes: quizData.time_limit_minutes ?? 0,
-          shuffle_questions: quizData.shuffle_questions ?? false,
-          target_classes: quizData.target_classes || [],
-          show_answer_review: quizData.show_answer_review ?? true,
-        })
+        .upsert(quizPayload)
         .select()
         .single();
+
+      // Graceful fallback jika kolom quiz_type belum ada di tabel Supabase
+      if (quizError && (quizError.message?.includes("quiz_type") || quizError.code === "PGRST204" || quizError.message?.includes("column"))) {
+        delete quizPayload.quiz_type;
+        const res = await supabase.from("quizzes").upsert(quizPayload).select().single();
+        quizResult = res.data;
+        quizError = res.error;
+      }
 
       if (!quizError && quizResult) {
         // Synchronize questions safely without wiping foreign keys and submissions
@@ -426,6 +437,7 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
     const updated: Quiz = {
       ...quizzes[existingIndex],
       ...quizData,
+      quiz_type: quizData.quiz_type ?? quizzes[existingIndex].quiz_type ?? "multiple_choice",
       target_classes: quizData.target_classes ?? quizzes[existingIndex].target_classes ?? [],
       show_answer_review: quizData.show_answer_review ?? quizzes[existingIndex].show_answer_review ?? true,
     } as Quiz;
@@ -439,6 +451,7 @@ export async function saveQuiz(quizData: Partial<Quiz>): Promise<Quiz> {
       description: quizData.description || "",
       subject: quizData.subject || "Umum",
       quiz_code: quizData.quiz_code || Math.random().toString(36).substring(2, 8).toUpperCase(),
+      quiz_type: quizData.quiz_type || "multiple_choice",
       is_active: quizData.is_active ?? true,
       time_limit_minutes: quizData.time_limit_minutes ?? 0,
       shuffle_questions: quizData.shuffle_questions ?? false,

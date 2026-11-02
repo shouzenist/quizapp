@@ -991,7 +991,9 @@ create policy "Allow all for submission_answers" on public.submission_answers fo
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <p className="font-bold text-slate-900 leading-snug">
-                          {idx + 1}. {q.question_text}
+                          {quiz?.quiz_type === "match_up"
+                            ? `Pasangan #${idx + 1}`
+                            : `${idx + 1}. ${q.question_text}`}
                         </p>
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${
@@ -1023,13 +1025,14 @@ create policy "Allow all for submission_answers" on public.submission_answers fo
                               : "text-rose-700 font-semibold"
                           }
                         >
-                          Jawaban Murid: {answerDisplay}
+                          {quiz?.quiz_type === "match_up" ? "Pasangan Murid: " : "Jawaban Murid: "}
+                          {answerDisplay}
                         </p>
-                        {!isCorrect && correctOpt && (
+                        {!isCorrect && (
                           <p className="text-slate-600">
-                            Kunci Jawaban Benar:{" "}
+                            {quiz?.quiz_type === "match_up" ? "Pasangan yang Benar: " : "Kunci Jawaban Benar: "}
                             <strong className="text-slate-900 font-bold">
-                              {correctOpt.option_text}
+                              {q.question_text || correctOpt?.option_text}
                             </strong>
                           </p>
                         )}

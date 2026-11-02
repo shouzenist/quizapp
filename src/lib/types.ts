@@ -15,6 +15,8 @@ export interface Question {
   options: Option[];
 }
 
+export type QuizType = "multiple_choice" | "match_up";
+
 export interface Quiz {
   id: string;
   teacher_id?: string;
@@ -28,6 +30,7 @@ export interface Quiz {
   shuffle_questions: boolean;
   target_classes?: string[];
   created_at: string;
+  quiz_type?: QuizType; // "multiple_choice" | "match_up"
   questions?: Question[];
   submissions_count?: number;
 }
@@ -40,6 +43,7 @@ export interface StudentAnswer {
   question_text?: string;
   selected_option_text?: string;
   selected_option_index?: number;
+  image_url?: string;
 }
 
 export interface Submission {

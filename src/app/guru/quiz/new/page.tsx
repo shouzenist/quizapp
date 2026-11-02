@@ -14,16 +14,27 @@ import {
   Clock,
   Layers,
   Award,
+  Puzzle,
 } from "lucide-react";
 import { saveQuiz } from "@/lib/quizStore";
-import { Quiz, Question, Option } from "@/lib/types";
+import { Quiz, Question, Option, QuizType } from "@/lib/types";
 import { sounds } from "@/lib/sound";
 import ImageUploader, { compressImage } from "@/components/ImageUploader";
+
+interface MatchUpPair {
+  id: string;
+  image_url: string;
+  text: string;
+  points: number;
+}
 
 function NewQuizContent() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Quiz Type: Exclusive (Multiple Choice vs Match-Up)
+  const [quizType, setQuizType] = useState<QuizType>("multiple_choice");
 
   // Quiz Meta
   const [title, setTitle] = useState("");
@@ -59,7 +70,7 @@ function NewQuizContent() {
   const [defaultPoints, setDefaultPoints] = useState<number>(20);
   const [defaultOptionCount, setDefaultOptionCount] = useState<number>(4);
 
-  // Questions
+  // Questions for Multiple Choice
   const [questions, setQuestions] = useState<Question[]>([
     {
       id: "q-1",
@@ -76,9 +87,19 @@ function NewQuizContent() {
     },
   ]);
 
-  // Load sample template for instant testing
+  // Pairs for Match-Up (Mencocokkan Gambar dengan Tulisan)
+  const [matchUpPairs, setMatchUpPairs] = useState<MatchUpPair[]>([
+    { id: "pair-1", image_url: "", text: "", points: 20 },
+    { id: "pair-2", image_url: "", text: "", points: 20 },
+    { id: "pair-3", image_url: "", text: "", points: 20 },
+    { id: "pair-4", image_url: "", text: "", points: 20 },
+    { id: "pair-5", image_url: "", text: "", points: 20 },
+  ]);
+
+  // Load sample template for Multiple Choice
   const handleLoadSample = () => {
     sounds.playSelect();
+    setQuizType("multiple_choice");
     setTitle("Kuis Sains & Penemuan Hebat");
     setDescription("Kuis seru seputar fakta sains, penemu, dan teknologi.");
     setSubject("IPA");
@@ -132,6 +153,47 @@ function NewQuizContent() {
           { id: "s-4-3", option_text: "Stratosfer", is_correct: false },
           { id: "s-4-4", option_text: "Eksosfer", is_correct: false },
         ],
+      },
+    ]);
+  };
+
+  // Load sample template for Match-Up
+  const handleLoadMatchUpSample = () => {
+    sounds.playSelect();
+    setQuizType("match_up");
+    setTitle("Mencocokkan Satwa & Habitat Alami");
+    setDescription("Hubungkan setiap gambar satwa berikut dengan nama yang tepat pada kolom sebelah kanan.");
+    setSubject("IPA / Biologi");
+    setMatchUpPairs([
+      {
+        id: "pair-sample-1",
+        image_url: "https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?w=700&auto=format&fit=crop&q=80",
+        text: "Gajah Afrika",
+        points: 20,
+      },
+      {
+        id: "pair-sample-2",
+        image_url: "https://images.unsplash.com/photo-1614027164847-1b28caa1407c?w=700&auto=format&fit=crop&q=80",
+        text: "Singa Jantan",
+        points: 20,
+      },
+      {
+        id: "pair-sample-3",
+        image_url: "https://images.unsplash.com/photo-1570481662006-a3a1374699e8?w=700&auto=format&fit=crop&q=80",
+        text: "Lumba-lumba",
+        points: 20,
+      },
+      {
+        id: "pair-sample-4",
+        image_url: "https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=700&auto=format&fit=crop&q=80",
+        text: "Beruang Kutub",
+        points: 20,
+      },
+      {
+        id: "pair-sample-5",
+        image_url: "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?w=700&auto=format&fit=crop&q=80",
+        text: "Jerapah",
+        points: 20,
       },
     ]);
   };
@@ -366,6 +428,79 @@ function NewQuizContent() {
     });
   };
 
+  // Match-Up Handlers
+  const handleAddMatchUpPair = () => {
+    sounds.playSelect();
+    const newId = "pair-" + Date.now();
+    setMatchUpPairs((prev) => [
+      ...prev,
+      {
+        id: newId,
+        image_url: "",
+        text: "",
+        points: defaultPoints,
+      },
+    ]);
+  };
+
+  const handleRemoveMatchUpPair = (idx: number) => {
+    if (matchUpPairs.length <= 2) {
+      alert("Kuis Match-Up minimal harus memiliki 2 pasangan gambar.");
+      return;
+    }
+    sounds.playSelect();
+    setMatchUpPairs((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleMatchUpImageChange = (idx: number, imageUrl?: string) => {
+    setMatchUpPairs((prev) => {
+      const updated = [...prev];
+      updated[idx].image_url = imageUrl || "";
+      return updated;
+    });
+  };
+
+  const handleMatchUpTextChange = (idx: number, text: string) => {
+    setMatchUpPairs((prev) => {
+      const updated = [...prev];
+      updated[idx].text = text;
+      return updated;
+    });
+  };
+
+  const handleMatchUpPointsChange = (idx: number, pts: number) => {
+    setMatchUpPairs((prev) => {
+      const updated = [...prev];
+      updated[idx].points = pts;
+      return updated;
+    });
+  };
+
+  const handleApplyMatchUpDefaultPoints = (pts: number) => {
+    const clean = Math.max(1, Math.min(100, pts || 1));
+    setDefaultPoints(clean);
+    sounds.playSelect();
+    setMatchUpPairs((prev) =>
+      prev.map((p) => ({
+        ...p,
+        points: clean,
+      }))
+    );
+  };
+
+  const handleAutoCalculateMatchUpPoints = () => {
+    if (matchUpPairs.length === 0) return;
+    sounds.playCorrect();
+    const calculated = Math.max(1, Math.round(100 / matchUpPairs.length));
+    setDefaultPoints(calculated);
+    setMatchUpPairs((prev) =>
+      prev.map((p) => ({
+        ...p,
+        points: calculated,
+      }))
+    );
+  };
+
   // Save Quiz
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -377,27 +512,81 @@ function NewQuizContent() {
       return;
     }
 
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      if (!q.question_text.trim()) {
-        setErrorMsg(`Soal nomor ${i + 1} belum memiliki teks pertanyaan.`);
+    let finalQuestions: Question[] = [];
+
+    if (quizType === "multiple_choice") {
+      if (questions.length === 0) {
+        setErrorMsg("Kuis minimal harus memiliki 1 butir soal.");
+        sounds.playWrong();
+        return;
+      }
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        if (!q.question_text.trim()) {
+          setErrorMsg(`Soal nomor ${i + 1} belum memiliki teks pertanyaan.`);
+          sounds.playWrong();
+          return;
+        }
+
+        const hasEmptyOpt = q.options.some((o) => !o.option_text.trim());
+        if (hasEmptyOpt) {
+          setErrorMsg(`Semua pilihan jawaban pada soal nomor ${i + 1} harus diisi.`);
+          sounds.playWrong();
+          return;
+        }
+
+        const hasCorrect = q.options.some((o) => o.is_correct);
+        if (!hasCorrect) {
+          setErrorMsg(`Pilih minimal 1 kunci jawaban yang benar untuk soal nomor ${i + 1}.`);
+          sounds.playWrong();
+          return;
+        }
+      }
+      finalQuestions = questions;
+    } else {
+      // Match-Up Validation
+      if (matchUpPairs.length < 2) {
+        setErrorMsg("Kuis Match-Up minimal harus memiliki 2 pasangan gambar & tulisan.");
+        sounds.playWrong();
+        return;
+      }
+      for (let i = 0; i < matchUpPairs.length; i++) {
+        const p = matchUpPairs[i];
+        if (!p.image_url) {
+          setErrorMsg(`Pasangan nomor ${i + 1} belum memiliki gambar.`);
+          sounds.playWrong();
+          return;
+        }
+        if (!p.text.trim()) {
+          setErrorMsg(`Pasangan nomor ${i + 1} belum memiliki label/teks pasangan.`);
+          sounds.playWrong();
+          return;
+        }
+      }
+
+      // Check for duplicate texts among pairs to prevent ambiguous matching
+      const texts = matchUpPairs.map((p) => p.text.trim().toLowerCase());
+      const hasDuplicate = texts.some((t, idx) => texts.indexOf(t) !== idx);
+      if (hasDuplicate) {
+        setErrorMsg("Setiap pasangan gambar harus memiliki nama/label teks yang berbeda agar murid tidak bingung.");
         sounds.playWrong();
         return;
       }
 
-      const hasEmptyOpt = q.options.some((o) => !o.option_text.trim());
-      if (hasEmptyOpt) {
-        setErrorMsg(`Semua pilihan jawaban pada soal nomor ${i + 1} harus diisi.`);
-        sounds.playWrong();
-        return;
-      }
-
-      const hasCorrect = q.options.some((o) => o.is_correct);
-      if (!hasCorrect) {
-        setErrorMsg(`Pilih minimal 1 kunci jawaban yang benar untuk soal nomor ${i + 1}.`);
-        sounds.playWrong();
-        return;
-      }
+      finalQuestions = matchUpPairs.map((p, idx) => ({
+        id: p.id || `q-pair-${idx + 1}`,
+        question_text: p.text.trim(),
+        image_url: p.image_url,
+        points: Number(p.points) || 10,
+        order_index: idx,
+        options: [
+          {
+            id: `opt-${p.id || idx + 1}`,
+            option_text: p.text.trim(),
+            is_correct: true,
+          },
+        ],
+      }));
     }
 
     setSaving(true);
@@ -411,7 +600,8 @@ function NewQuizContent() {
         is_active: isActive,
         show_answer_review: showAnswerReview,
         target_classes: targetClasses,
-        questions,
+        quiz_type: quizType,
+        questions: finalQuestions,
       });
 
       sounds.playCorrect();
@@ -441,21 +631,123 @@ function NewQuizContent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900">
-            Buat Kuis Baru
+            Buat Latihan Soal Baru
           </h1>
           <p className="text-xs md:text-sm text-slate-500 mt-1">
-            Isi detail kuis dan susun butir pertanyaan (bisa upload atau paste gambar langsung).
+            Pilih model latihan (Pilihan Ganda atau Match-Up Gambar), isi informasi kuis, dan susun butir soal.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleLoadSample}
-          className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 transition-colors flex items-center gap-1.5 self-start cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-blue-700" />
-          <span>Muat Contoh Soal Gambar</span>
-        </button>
+        {quizType === "multiple_choice" ? (
+          <button
+            type="button"
+            onClick={handleLoadSample}
+            className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 transition-colors flex items-center gap-1.5 self-start cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-blue-700" />
+            <span>Muat Contoh Pilihan Ganda</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleLoadMatchUpSample}
+            className="px-3.5 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold border border-purple-200 transition-colors flex items-center gap-1.5 self-start cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-purple-700" />
+            <span>Muat Contoh Match-Up Satwa</span>
+          </button>
+        )}
+      </div>
+
+      {/* Quiz Type Selector Card */}
+      <div className="mb-6 p-5 md:p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+              Model & Jenis Latihan Soal
+            </span>
+            <p className="text-xs text-slate-500">
+              Pilih jenis latihan yang ingin dibuat. Satu kuis hanya berisi 1 jenis soal (tidak dicampur).
+            </p>
+          </div>
+          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 self-start">
+            Eksklusif per Latihan
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <button
+            type="button"
+            onClick={() => {
+              sounds.playSelect();
+              setQuizType("multiple_choice");
+            }}
+            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
+              quizType === "multiple_choice"
+                ? "bg-blue-50/70 border-blue-500 ring-2 ring-blue-200 shadow-sm"
+                : "bg-slate-50/70 hover:bg-slate-100/70 border-slate-200 text-slate-700"
+            }`}
+          >
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                quizType === "multiple_choice"
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-200 text-slate-600"
+              }`}
+            >
+              <CheckCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-slate-900">Pilihan Ganda</span>
+                {quizType === "multiple_choice" && (
+                  <span className="text-[10px] bg-blue-600 text-white font-extrabold px-1.5 py-0.5 rounded-md">
+                    AKTIF
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Model standar pilihan A, B, C, D dengan 1 kunci jawaban benar.
+              </p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              sounds.playSelect();
+              setQuizType("match_up");
+            }}
+            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
+              quizType === "match_up"
+                ? "bg-purple-50/70 border-purple-500 ring-2 ring-purple-200 shadow-sm"
+                : "bg-slate-50/70 hover:bg-slate-100/70 border-slate-200 text-slate-700"
+            }`}
+          >
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                quizType === "match_up"
+                  ? "bg-purple-600 text-white"
+                  : "bg-slate-200 text-slate-600"
+              }`}
+            >
+              <Puzzle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-slate-900">Match-Up Gambar & Tulisan</span>
+                {quizType === "match_up" && (
+                  <span className="text-[10px] bg-purple-600 text-white font-extrabold px-1.5 py-0.5 rounded-md">
+                    AKTIF
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Murid mencocokkan gambar di sisi kiri dengan tulisan jawaban di sisi kanan (Educandy / Wordwall style).
+              </p>
+            </div>
+          </button>
+        </div>
       </div>
 
       {errorMsg && (
@@ -712,7 +1004,8 @@ function NewQuizContent() {
           </div>
         </div>
 
-        <div className="space-y-6">
+        {quizType === "multiple_choice" ? (
+          <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-slate-900">
               Daftar Soal ({questions.length})
@@ -967,6 +1260,171 @@ function NewQuizContent() {
             <span>Tambah Butir Soal Baru</span>
           </button>
         </div>
+      ) : (
+        /* Match-Up Editor */
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Puzzle className="w-5 h-5 text-purple-600" />
+                <span>Daftar Pasangan Gambar & Tulisan ({matchUpPairs.length})</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Setiap gambar di sisi kiri akan dipasangkan murid dengan label teks di sisi kanan.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAddMatchUpPair}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs border border-purple-200 transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Tambah Pasangan</span>
+            </button>
+          </div>
+
+          {/* Quick Match-Up Defaults Bar */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50/80 via-fuchsia-50/40 to-slate-50 border border-purple-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <Award className="w-4 h-4 text-purple-600" />
+                <span>Poin per Pasangan:</span>
+              </span>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[10, 20, 25].map((pts) => (
+                  <button
+                    key={pts}
+                    type="button"
+                    onClick={() => handleApplyMatchUpDefaultPoints(pts)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                      defaultPoints === pts
+                        ? "bg-purple-600 text-white border-purple-600 shadow-xs ring-2 ring-purple-200"
+                        : "bg-white text-slate-700 border-slate-200 hover:bg-purple-50 hover:text-purple-700"
+                    }`}
+                  >
+                    {pts} Pts
+                  </button>
+                ))}
+
+                <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={defaultPoints}
+                    onChange={(e) => handleApplyMatchUpDefaultPoints(Number(e.target.value))}
+                    className="w-12 text-center font-bold text-xs text-purple-800 focus:outline-none"
+                  />
+                  <span className="text-[11px] text-slate-400 font-medium">Poin</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAutoCalculateMatchUpPoints}
+                  title="Otomatis bagi 100 poin secara merata untuk seluruh pasangan"
+                  className="px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <Sparkles className="w-3 h-3 text-emerald-600" />
+                  <span>Bagi Rata (Total 100 Poin)</span>
+                </button>
+              </div>
+            </div>
+
+            <span className="text-xs text-purple-700 font-semibold bg-purple-100/70 px-3 py-1 rounded-xl self-start md:self-center">
+              Total Soal: {matchUpPairs.length} Pasangan
+            </span>
+          </div>
+
+          {matchUpPairs.map((pair, pIdx) => (
+            <div
+              key={pair.id}
+              className="p-6 md:p-7 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg bg-purple-100 text-purple-700 text-xs font-extrabold flex items-center justify-center">
+                    #{pIdx + 1}
+                  </span>
+                  <span className="text-sm font-extrabold text-slate-900">
+                    Pasangan Gambar #{pIdx + 1}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                    <span>Poin:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={pair.points || 10}
+                      onChange={(e) => handleMatchUpPointsChange(pIdx, Number(e.target.value))}
+                      className="w-14 px-2 py-1 text-center font-bold text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-purple-600"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveMatchUpPair(pIdx)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    title="Hapus Pasangan Ini"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
+                {/* Left Column: Gambar */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    1. Gambar Objek / Ilustrasi <span className="text-rose-500">*</span>
+                  </label>
+                  <ImageUploader
+                    value={pair.image_url}
+                    onChange={(url) => handleMatchUpImageChange(pIdx, url)}
+                    label="Upload atau Paste Gambar (Ctrl+V)"
+                  />
+                </div>
+
+                {/* Right Column: Teks Pasangan */}
+                <div className="flex flex-col justify-start">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                    2. Nama / Label Teks yang Cocok <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={pair.text}
+                    onChange={(e) => handleMatchUpTextChange(pIdx, e.target.value)}
+                    placeholder="Contoh: Gajah Afrika, Monas, Gitar Akustik..."
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all text-slate-800 text-sm font-bold bg-purple-50/20"
+                  />
+                  <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-slate-500 text-xs space-y-1">
+                    <p className="font-semibold text-slate-700 flex items-center gap-1">
+                      <span>💡 Petunjuk:</span>
+                    </p>
+                    <p>
+                      Teks ini akan menjadi salah satu pilihan kartu yang harus dipasangkan siswa ke gambar ini di layar mobile.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={handleAddMatchUpPair}
+            className="w-full py-4 border-2 border-dashed border-purple-200 hover:border-purple-400 rounded-3xl text-purple-700 font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer bg-purple-50/20 hover:bg-purple-50/50"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Pasangan Gambar Baru</span>
+          </button>
+        </div>
+      )}
 
         <div className="sticky bottom-4 p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200 shadow-xl flex items-center justify-between gap-4">
           <Link

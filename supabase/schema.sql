@@ -25,6 +25,7 @@ create table if not exists public.quizzes (
 -- Pastikan kolom baru ada jika tabel sudah dibuat sebelumnya
 alter table public.quizzes add column if not exists target_classes text[] default '{}';
 alter table public.quizzes add column if not exists show_answer_review boolean default true;
+alter table public.quizzes add column if not exists quiz_type text default 'multiple_choice';
 
 -- 2. TABEL SOAL
 create table if not exists public.questions (

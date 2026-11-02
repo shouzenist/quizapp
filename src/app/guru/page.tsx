@@ -293,6 +293,15 @@ export default function TeacherDashboard() {
                     <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                       {quiz.subject || "Umum"}
                     </span>
+                    {quiz.quiz_type === "match_up" ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">
+                        <span>🧩 Match-Up</span>
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-700 border border-sky-200 flex items-center gap-1">
+                        <span>🔘 Pilihan Ganda</span>
+                      </span>
+                    )}
                     <button
                       onClick={() => handleToggleActive(quiz)}
                       className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-colors cursor-pointer ${

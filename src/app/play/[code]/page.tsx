@@ -21,10 +21,19 @@ import {
   ShieldAlert,
   Image as ImageIcon,
   EyeOff,
+  Puzzle,
+  Maximize2,
+  X,
 } from "lucide-react";
 import { getQuizByCode, submitQuizAnswers } from "@/lib/quizStore";
 import { Quiz, Question, Option, StudentAnswer } from "@/lib/types";
 import { sounds } from "@/lib/sound";
+
+interface MatchUpCard {
+  id: string;
+  text: string;
+  sourceQuestionId: string;
+}
 
 function PlayQuizContent() {
   const router = useRouter();
@@ -49,6 +58,13 @@ function PlayQuizContent() {
   const [tabSwitchCount, setTabSwitchCount] = useState<number>(0);
   const [tabSwitchWarning, setTabSwitchWarning] = useState<boolean>(false);
   const [startedAt, setStartedAt] = useState<string>("");
+
+  // Match-Up Specific States
+  const [matchCards, setMatchCards] = useState<MatchUpCard[]>([]);
+  const [matchedSlots, setMatchedSlots] = useState<Record<string, string | null>>({}); // questionId -> cardId
+  const [activeTextCardId, setActiveTextCardId] = useState<string | null>(null);
+  const [activeSlotQId, setActiveSlotQId] = useState<string | null>(null);
+  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
 
   // Final submission result
   const [finalScore, setFinalScore] = useState<number>(0);
@@ -127,11 +143,175 @@ function PlayQuizContent() {
     }
     setFormError("");
     setStartedAt(new Date().toISOString());
+
+    // Initialize Match-Up cards if match_up quiz
+    if (quiz?.quiz_type === "match_up" && quiz.questions) {
+      const cards: MatchUpCard[] = quiz.questions.map((q, idx) => ({
+        id: `card-${q.id || idx}`,
+        text: (q.question_text || q.options?.[0]?.option_text || "").trim(),
+        sourceQuestionId: q.id,
+      }));
+      // Shuffled text choices for students
+      const shuffled = [...cards].sort(() => Math.random() - 0.5);
+      setMatchCards(shuffled);
+      setMatchedSlots({});
+      setActiveTextCardId(null);
+      setActiveSlotQId(null);
+    }
+
     setStage("playing");
     sounds.playSelect();
   };
 
-  // Select an option
+  // Match-Up Handlers
+  const handleSelectTextCard = (cardId: string) => {
+    sounds.playSelect();
+    // If a slot is waiting for placement
+    if (activeSlotQId) {
+      setMatchedSlots((prev) => {
+        const next = { ...prev };
+        // Detach card from previous slot if placed elsewhere
+        for (const [qId, cId] of Object.entries(next)) {
+          if (cId === cardId) {
+            next[qId] = null;
+          }
+        }
+        next[activeSlotQId] = cardId;
+        return next;
+      });
+      setActiveSlotQId(null);
+      setActiveTextCardId(null);
+      return;
+    }
+
+    // Toggle active card
+    if (activeTextCardId === cardId) {
+      setActiveTextCardId(null);
+    } else {
+      setActiveTextCardId(cardId);
+    }
+  };
+
+  const handleSelectSlot = (qId: string) => {
+    sounds.playSelect();
+    // If a text card was selected
+    if (activeTextCardId) {
+      setMatchedSlots((prev) => {
+        const next = { ...prev };
+        for (const [key, cId] of Object.entries(next)) {
+          if (cId === activeTextCardId) {
+            next[key] = null;
+          }
+        }
+        next[qId] = activeTextCardId;
+        return next;
+      });
+      setActiveTextCardId(null);
+      setActiveSlotQId(null);
+      return;
+    }
+
+    // Toggle active slot
+    if (activeSlotQId === qId) {
+      setActiveSlotQId(null);
+    } else {
+      setActiveSlotQId(qId);
+    }
+  };
+
+  const handleDetachSlot = (qId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    sounds.playSelect();
+    setMatchedSlots((prev) => ({
+      ...prev,
+      [qId]: null,
+    }));
+    if (activeSlotQId === qId) {
+      setActiveSlotQId(null);
+    }
+  };
+
+  const handleResetAllMatches = () => {
+    sounds.playSelect();
+    setMatchedSlots({});
+    setActiveTextCardId(null);
+    setActiveSlotQId(null);
+  };
+
+  // Submit Match-Up answers
+  const handleFinishMatchUp = async () => {
+    if (!quiz || isSubmitting) return;
+
+    const unplacedCount = questions.filter((q) => !matchedSlots[q.id]).length;
+    if (unplacedCount > 0) {
+      const confirmSubmit = window.confirm(
+        `Masih ada ${unplacedCount} gambar yang belum dipasangkan dengan tulisan. Yakin ingin mengumpulkan jawaban sekarang?`
+      );
+      if (!confirmSubmit) return;
+    }
+
+    setIsSubmitting(true);
+    let calculatedScore = 0;
+    let correct = 0;
+    const recordedAnswers: StudentAnswer[] = [];
+
+    questions.forEach((q, idx) => {
+      const cardId = matchedSlots[q.id];
+      const card = matchCards.find((c) => c.id === cardId);
+      const placedText = card ? card.text.trim() : "";
+      const correctText = (q.question_text || q.options?.[0]?.option_text || "").trim();
+      const isCorrect = placedText.toLowerCase() === correctText.toLowerCase() && placedText !== "";
+
+      if (isCorrect) {
+        correct += 1;
+        calculatedScore += q.points || 10;
+      }
+
+      recordedAnswers.push({
+        question_id: q.id,
+        question_index: idx,
+        question_text: correctText,
+        image_url: q.image_url,
+        selected_option_id: cardId || "",
+        selected_option_text: placedText || "(Belum Dipasangkan)",
+        is_correct: isCorrect,
+      });
+    });
+
+    const totalPossiblePoints = questions.reduce((sum, q) => sum + (q.points || 10), 0);
+    const normalizedScore = totalPossiblePoints > 0
+      ? Math.round((calculatedScore / totalPossiblePoints) * 100)
+      : 0;
+
+    setFinalScore(normalizedScore);
+    setCorrectCount(correct);
+    setSubmittedAnswers(recordedAnswers);
+
+    await submitQuizAnswers({
+      quiz_id: quiz.id,
+      student_name: studentName.trim(),
+      student_class: studentClass.trim(),
+      score: normalizedScore,
+      total_questions: questions.length,
+      correct_answers: correct,
+      tab_switch_count: tabSwitchCount,
+      started_at: startedAt,
+      completed_at: new Date().toISOString(),
+      answers: recordedAnswers,
+    });
+
+    setStage("finished");
+    setIsSubmitting(false);
+
+    sounds.playFinish();
+    confetti({
+      particleCount: 120,
+      spread: 70,
+      origin: { y: 0.6 },
+    });
+  };
+
+  // Select an option (Multiple Choice)
   const handleSelectOption = (questionId: string, optionId: string) => {
     sounds.playSelect();
     setSelectedAnswers((prev) => ({
@@ -164,9 +344,12 @@ function PlayQuizContent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [stage, currentQuestion, currentQuestionIndex, questions.length]);
 
-  // Calculate score & Submit
+  // Calculate score & Submit (Multiple Choice)
   const handleFinishQuiz = async () => {
     if (!quiz || isSubmitting) return;
+    if (quiz.quiz_type === "match_up") {
+      return handleFinishMatchUp();
+    }
     setIsSubmitting(true);
 
     let calculatedScore = 0;
@@ -439,6 +622,327 @@ function PlayQuizContent() {
 
   // STAGE 2: ACTIVE QUIZ IN PROGRESS
   if (stage === "playing") {
+    // Match-Up Game Mode
+    if (quiz.quiz_type === "match_up") {
+      const matchedCount = questions.filter((q) => Boolean(matchedSlots[q.id])).length;
+      const progressPercent = questions.length > 0 ? (matchedCount / questions.length) * 100 : 0;
+      const allMatched = matchedCount === questions.length && questions.length > 0;
+
+      return (
+        <div className="max-w-4xl mx-auto px-2 sm:px-4 py-4 md:py-6 w-full flex-1 flex flex-col justify-between">
+          <div>
+            {/* Tab switch anti-cheat warning */}
+            {tabSwitchWarning && (
+              <div className="mb-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between animate-bounce">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span>
+                    <strong>Peringatan!</strong> Pindah tab terdeteksi ({tabSwitchCount}x).
+                  </span>
+                </div>
+                <button
+                  onClick={() => setTabSwitchWarning(false)}
+                  className="text-xs font-bold text-amber-700 underline"
+                >
+                  Tutup
+                </button>
+              </div>
+            )}
+
+            {/* Top Match-Up Game Header */}
+            <div className="glass-card p-3 sm:p-4 rounded-2xl bg-white border border-slate-200 shadow-sm mb-4">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-purple-100 text-purple-700">
+                    <Puzzle className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <h2 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-tight">
+                      {quiz.title}
+                    </h2>
+                    <p className="text-[11px] text-slate-400">
+                      {studentName} • {studentClass}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {quiz.time_limit_minutes > 0 && (
+                    <div
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-mono font-bold border ${
+                        secondsRemaining < 60
+                          ? "bg-rose-50 text-rose-600 border-rose-200 animate-pulse"
+                          : "bg-slate-100 text-slate-700 border-slate-200"
+                      }`}
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{formatTime(secondsRemaining)}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleResetAllMatches}
+                    title="Lepaskan semua pasangan kembali ke pilihan"
+                    className="p-1.5 sm:px-2.5 sm:py-1 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Reset</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold mb-1">
+                  <span>Progres Pasangan: {matchedCount} dari {questions.length}</span>
+                  <span className="text-purple-700 font-bold">{Math.round(progressPercent)}%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-purple-600 to-indigo-500 h-full rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Interactive Help Hint */}
+              <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                <p className="flex items-center gap-1.5 font-medium">
+                  {activeTextCardId ? (
+                    <span className="text-purple-700 font-bold animate-pulse">
+                      👉 Ketuk salah satu kotak di samping gambar (kiri) untuk memasangkan teks yang dipilih!
+                    </span>
+                  ) : activeSlotQId ? (
+                    <span className="text-purple-700 font-bold animate-pulse">
+                      👉 Ketuk kartu tulisan di sebelah kanan untuk mengisi kotak yang dipilih!
+                    </span>
+                  ) : (
+                    <span>
+                      💡 <strong>Petunjuk:</strong> Ketuk kartu tulisan di kanan, lalu ketuk kotak di samping gambar sebelah kiri (atau sebaliknya).
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Side-by-Side Playing Board (Kiri: Gambar + Kotak, Kanan: Pilihan Tulisan) */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-4 items-start">
+              {/* KOLOM KIRI: Daftar Gambar & Kotak Target */}
+              <div className="space-y-2.5 sm:space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                    <span>🖼️ Gambar Soal</span>
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    {questions.length} Gambar
+                  </span>
+                </div>
+
+                {questions.map((q, idx) => {
+                  const assignedCardId = matchedSlots[q.id];
+                  const assignedCard = matchCards.find((c) => c.id === assignedCardId);
+                  const isSlotActive = activeSlotQId === q.id;
+
+                  return (
+                    <div
+                      key={q.id || `q-${idx}`}
+                      className={`p-2 sm:p-3 rounded-2xl bg-white border transition-all shadow-xs flex flex-col justify-between ${
+                        isSlotActive
+                          ? "border-purple-500 ring-2 ring-purple-200 bg-purple-50/20"
+                          : assignedCard
+                          ? "border-purple-200 bg-white"
+                          : "border-slate-200"
+                      }`}
+                    >
+                      {/* Gambar with Zoom Button */}
+                      <div className="relative rounded-xl overflow-hidden bg-slate-100 border border-slate-100 aspect-[4/3] w-full flex items-center justify-center group">
+                        {q.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={q.image_url}
+                            alt={`Gambar #${idx + 1}`}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="text-slate-400 text-center p-2 text-xs">
+                            <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                            <span>Gambar #{idx + 1}</span>
+                          </div>
+                        )}
+
+                        {q.image_url && (
+                          <button
+                            type="button"
+                            onClick={() => setZoomedImageUrl(q.image_url || null)}
+                            title="Perbesar Gambar"
+                            className="absolute top-1.5 right-1.5 p-1 sm:p-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white backdrop-blur-xs transition-colors cursor-pointer shadow-sm"
+                          >
+                            <Maximize2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                          </button>
+                        )}
+
+                        <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-black/60 text-white text-[10px] font-mono font-bold backdrop-blur-xs">
+                          #{idx + 1}
+                        </span>
+                      </div>
+
+                      {/* Kotak Target Pasangan */}
+                      <div className="mt-2">
+                        {assignedCard ? (
+                          <div
+                            onClick={() => handleSelectSlot(q.id)}
+                            className="w-full py-1.5 px-2 rounded-xl bg-purple-100/80 border-2 border-purple-400 text-purple-900 text-xs sm:text-sm font-bold flex items-center justify-between gap-1 shadow-xs transition-all cursor-pointer hover:bg-purple-100"
+                          >
+                            <span className="truncate leading-tight">
+                              {assignedCard.text}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => handleDetachSlot(q.id, e)}
+                              title="Lepaskan tulisan ini"
+                              className="w-5 h-5 rounded-full hover:bg-purple-200 text-purple-600 hover:text-rose-600 flex items-center justify-center font-bold text-xs flex-shrink-0 cursor-pointer"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleSelectSlot(q.id)}
+                            className={`w-full py-2 px-1.5 rounded-xl border-2 border-dashed text-[11px] sm:text-xs font-bold transition-all text-center cursor-pointer flex items-center justify-center gap-1 ${
+                              isSlotActive
+                                ? "border-purple-500 bg-purple-100/50 text-purple-700 animate-pulse"
+                                : activeTextCardId
+                                ? "border-purple-300 bg-purple-50/40 text-purple-600 hover:border-purple-500"
+                                : "border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            <span>
+                              {isSlotActive ? "👉 Pasangkan Disini" : "+ Pasangkan"}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* KOLOM KANAN: Bank Pilihan Tulisan */}
+              <div className="space-y-2.5 sm:space-y-3 sticky top-4">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                    <span>📝 Pilihan Tulisan</span>
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    {matchCards.length} Kartu
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {matchCards.map((card) => {
+                    const isPlaced = Object.values(matchedSlots).includes(card.id);
+                    const isSelected = activeTextCardId === card.id;
+
+                    return (
+                      <button
+                        key={card.id}
+                        type="button"
+                        onClick={() => handleSelectTextCard(card.id)}
+                        className={`w-full p-2.5 sm:p-3 rounded-2xl text-left font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-between gap-2 shadow-xs ${
+                          isSelected
+                            ? "bg-purple-600 text-white border-2 border-purple-600 ring-4 ring-purple-200 shadow-md scale-[1.02]"
+                            : isPlaced
+                            ? "bg-slate-100 border-2 border-slate-200 text-slate-400 opacity-60"
+                            : "bg-white border-2 border-slate-200 hover:border-purple-300 hover:bg-purple-50/30 text-slate-800 active:scale-98"
+                        }`}
+                      >
+                        <span className="leading-snug break-words">
+                          {card.text}
+                        </span>
+
+                        {isPlaced ? (
+                          <span className="text-[10px] font-bold bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-md flex-shrink-0">
+                            ✓ Terpasang
+                          </span>
+                        ) : isSelected ? (
+                          <span className="text-[10px] font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-md flex-shrink-0 animate-pulse">
+                            Dipilih
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sticky Bottom Submission Bar */}
+          <div className="sticky bottom-3 mt-6 p-3 sm:p-4 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200 shadow-xl flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
+                {matchedCount}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800">
+                  {allMatched ? "Semua Terpasang! 🎉" : `${matchedCount} dari ${questions.length} Terpasang`}
+                </p>
+                <p className="text-[10px] text-slate-400">
+                  {allMatched ? "Siap untuk dikumpulkan" : "Pastikan semua gambar memiliki pasangan"}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleFinishMatchUp}
+              className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+                allMatched
+                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/25 ring-2 ring-emerald-200"
+                  : "bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 hover:from-purple-800 hover:to-indigo-700 shadow-purple-900/25"
+              }`}
+            >
+              <Send className="w-4 h-4" />
+              <span>{isSubmitting ? "Mengirim..." : "Kirim Jawaban"}</span>
+            </button>
+          </div>
+
+          {/* Zoom Modal Lightbox */}
+          {zoomedImageUrl && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
+              onClick={() => setZoomedImageUrl(null)}
+            >
+              <div
+                className="relative max-w-2xl max-h-[90vh] bg-white rounded-3xl p-2 shadow-2xl overflow-hidden flex flex-col items-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => setZoomedImageUrl(null)}
+                  className="absolute top-4 right-4 p-2 rounded-full bg-black/60 hover:bg-black/80 text-white z-10 cursor-pointer transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={zoomedImageUrl}
+                  alt="Detail Gambar Soal"
+                  className="max-h-[80vh] w-auto max-w-full rounded-2xl object-contain"
+                />
+                <p className="text-xs text-slate-500 py-2 font-medium">
+                  Klik di luar gambar atau tombol X untuk menutup
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
     const answeredCount = Object.keys(selectedAnswers).length;
     const progressPercent = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
@@ -693,7 +1197,9 @@ function PlayQuizContent() {
                     }`}
                   >
                     <p className="font-semibold text-slate-800 mb-1.5">
-                      {idx + 1}. {q.question_text}
+                      {quiz.quiz_type === "match_up"
+                        ? `Pasangan #${idx + 1}`
+                        : `${idx + 1}. ${q.question_text}`}
                     </p>
 
                     {/* Review image thumbnail */}
@@ -710,11 +1216,15 @@ function PlayQuizContent() {
 
                     <div className="space-y-0.5 text-xs">
                       <p className={isCorrect ? "text-emerald-700 font-medium" : "text-rose-700 font-medium"}>
-                        Jawabanmu: {selectedOpt ? selectedOpt.option_text : "(Tidak dijawab)"} {isCorrect ? "✓" : "✗"}
+                        {quiz.quiz_type === "match_up" ? "Pasanganmu: " : "Jawabanmu: "}
+                        {studentAns?.selected_option_text || selectedOpt?.option_text || "(Tidak dijawab)"} {isCorrect ? "✓ Benar" : "✗ Salah"}
                       </p>
-                      {!isCorrect && correctOpt && (
+                      {!isCorrect && (
                         <p className="text-slate-500">
-                          Kunci Jawaban: <strong className="text-slate-700">{correctOpt.option_text}</strong>
+                          {quiz.quiz_type === "match_up" ? "Pasangan yang Benar: " : "Kunci Jawaban: "}
+                          <strong className="text-slate-700">
+                            {q.question_text || correctOpt?.option_text}
+                          </strong>
                         </p>
                       )}
                     </div>
