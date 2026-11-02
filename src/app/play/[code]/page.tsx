@@ -381,7 +381,7 @@ function PlayQuizContent() {
     });
 
     const totalPossiblePoints = questions.reduce((sum, q) => sum + (q.points || 10), 0);
-    const normalizedScore = totalPossiblePoints > 0 
+    const normalizedScore = totalPossiblePoints > 0
       ? Math.round((calculatedScore / totalPossiblePoints) * 100)
       : 0;
 
@@ -534,11 +534,10 @@ function PlayQuizContent() {
                             sounds.playSelect();
                             setStudentClass(c);
                           }}
-                          className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                            isSelected
-                              ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25 ring-2 ring-blue-200"
-                              : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
-                          }`}
+                          className={`px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${isSelected
+                            ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25 ring-2 ring-blue-200"
+                            : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                            }`}
                         >
                           {isSelected && <Check className="w-3.5 h-3.5" />}
                           <span>{c}</span>
@@ -590,11 +589,10 @@ function PlayQuizContent() {
                           sounds.playSelect();
                           setStudentClass(c);
                         }}
-                        className={`px-2 py-0.5 rounded-md text-xs border transition-colors cursor-pointer ${
-                          studentClass === c
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700 border-slate-200"
-                        }`}
+                        className={`px-2 py-0.5 rounded-md text-xs border transition-colors cursor-pointer ${studentClass === c
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-slate-100 text-slate-600 hover:bg-blue-50 hover:text-blue-700 border-slate-200"
+                          }`}
                       >
                         {c}
                       </button>
@@ -670,11 +668,10 @@ function PlayQuizContent() {
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                   {quiz.time_limit_minutes > 0 && (
                     <div
-                      className={`flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-mono font-bold border ${
-                        secondsRemaining < 60
-                          ? "bg-rose-50 text-rose-600 border-rose-200 animate-pulse"
-                          : "bg-slate-100 text-slate-700 border-slate-200"
-                      }`}
+                      className={`flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-mono font-bold border ${secondsRemaining < 60
+                        ? "bg-rose-50 text-rose-600 border-rose-200 animate-pulse"
+                        : "bg-slate-100 text-slate-700 border-slate-200"
+                        }`}
                     >
                       <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                       <span>{formatTime(secondsRemaining)}</span>
@@ -733,7 +730,7 @@ function PlayQuizContent() {
               <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center justify-between px-1 py-0.5">
                   <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-                    <span>🖼️ Gambar Soal</span>
+                    <span>Gambar</span>
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 bg-slate-200/50 px-1.5 py-0.5 rounded">
                     {questions.length} Soal
@@ -749,15 +746,14 @@ function PlayQuizContent() {
                     <div
                       key={q.id || `q-${idx}`}
                       onClick={() => handleSelectSlot(q.id)}
-                      className={`p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-white border transition-all shadow-2xs flex flex-col justify-between cursor-pointer select-none group active:scale-[0.99] ${
-                        isSlotActive
-                          ? "border-purple-600 ring-4 ring-purple-200 bg-purple-50/40 shadow-md scale-[1.01]"
-                          : activeTextCardId && !assignedCard
+                      className={`p-1.5 sm:p-2.5 rounded-xl sm:rounded-2xl bg-white border transition-all shadow-2xs flex flex-col justify-between cursor-pointer select-none group active:scale-[0.99] ${isSlotActive
+                        ? "border-purple-600 ring-4 ring-purple-200 bg-purple-50/40 shadow-md scale-[1.01]"
+                        : activeTextCardId && !assignedCard
                           ? "border-purple-400 hover:border-purple-600 hover:ring-2 hover:ring-purple-200 bg-purple-50/15"
                           : assignedCard
-                          ? "border-purple-300 hover:border-purple-400 bg-white"
-                          : "border-slate-200 hover:border-purple-300 hover:shadow-xs"
-                      }`}
+                            ? "border-purple-300 hover:border-purple-400 bg-white"
+                            : "border-slate-200 hover:border-purple-300 hover:shadow-xs"
+                        }`}
                     >
                       {/* Kotak Gambar Utama (Area pilih seluas gambar) */}
                       <div className="relative rounded-lg sm:rounded-xl overflow-hidden bg-slate-100 border border-slate-100 aspect-[16/11] max-h-32 sm:max-h-44 w-full flex items-center justify-center">
@@ -831,16 +827,15 @@ function PlayQuizContent() {
                           </div>
                         ) : (
                           <div
-                            className={`w-full py-2 px-1.5 rounded-lg sm:rounded-xl border-2 border-dashed text-[11px] sm:text-xs font-bold transition-all text-center flex items-center justify-center gap-1 min-h-[38px] ${
-                              isSlotActive
-                                ? "border-purple-500 bg-purple-100/70 text-purple-700 ring-2 ring-purple-200 animate-pulse"
-                                : activeTextCardId
+                            className={`w-full py-2 px-1.5 rounded-lg sm:rounded-xl border-2 border-dashed text-[11px] sm:text-xs font-bold transition-all text-center flex items-center justify-center gap-1 min-h-[38px] ${isSlotActive
+                              ? "border-purple-500 bg-purple-100/70 text-purple-700 ring-2 ring-purple-200 animate-pulse"
+                              : activeTextCardId
                                 ? "border-purple-500 bg-purple-50 text-purple-700 ring-2 ring-purple-200 animate-pulse group-hover:bg-purple-100"
                                 : "border-slate-300 bg-slate-50 group-hover:border-purple-300 group-hover:bg-purple-50/20 text-slate-500"
-                            }`}
+                              }`}
                           >
                             <span>
-                              {isSlotActive ? "👉 Menunggu..." : activeTextCardId ? "👉 Pasang di sini" : "+ Pasangkan"}
+                              {isSlotActive ? "Menunggu..." : activeTextCardId ? "👉 Pasang di sini" : "+ Pasangkan"}
                             </span>
                           </div>
                         )}
@@ -856,7 +851,7 @@ function PlayQuizContent() {
               <div className="sticky top-[72px] sm:top-20 z-20 max-h-[calc(100dvh-165px)] sm:max-h-[calc(100dvh-125px)] overflow-y-auto overscroll-contain pr-1 sm:pr-1.5">
                 <div className="sticky top-0 bg-slate-50/95 backdrop-blur-xs py-1 z-10 flex items-center justify-between px-1 mb-1.5 sm:mb-2">
                   <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1">
-                    <span>📝 Pilihan Tulisan</span>
+                    <span>Pilihan</span>
                   </span>
                   <span className="text-[10px] font-bold text-slate-400 bg-slate-200/50 px-1.5 py-0.5 rounded">
                     {matchCards.length} Kartu
@@ -873,13 +868,12 @@ function PlayQuizContent() {
                         key={card.id}
                         type="button"
                         onClick={() => handleSelectTextCard(card.id)}
-                        className={`w-full py-2.5 px-2.5 sm:py-3 sm:px-3 rounded-xl sm:rounded-2xl text-left font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-between gap-1.5 shadow-2xs min-h-[44px] ${
-                          isSelected
-                            ? "bg-purple-600 text-white border-2 border-purple-700 ring-4 ring-purple-200/80 shadow-md scale-[1.01]"
-                            : isPlaced
+                        className={`w-full py-2.5 px-2.5 sm:py-3 sm:px-3 rounded-xl sm:rounded-2xl text-left font-bold text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-between gap-1.5 shadow-2xs min-h-[44px] ${isSelected
+                          ? "bg-purple-600 text-white border-2 border-purple-700 ring-4 ring-purple-200/80 shadow-md scale-[1.01]"
+                          : isPlaced
                             ? "bg-slate-100/90 border-2 border-slate-200 text-slate-400 opacity-60"
                             : "bg-white border-2 border-slate-200 hover:border-purple-300 hover:bg-purple-50/30 text-slate-800 active:scale-98"
-                        }`}
+                          }`}
                       >
                         <span className="leading-snug break-words">
                           {card.text}
@@ -922,11 +916,10 @@ function PlayQuizContent() {
               type="button"
               disabled={isSubmitting}
               onClick={handleFinishMatchUp}
-              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 flex-shrink-0 ${
-                allMatched
-                  ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/25 ring-2 ring-emerald-200"
-                  : "bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 hover:from-purple-800 hover:to-indigo-700 shadow-purple-900/25"
-              }`}
+              className={`px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white shadow-md active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 flex-shrink-0 ${allMatched
+                ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-emerald-600/25 ring-2 ring-emerald-200"
+                : "bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 hover:from-purple-800 hover:to-indigo-700 shadow-purple-900/25"
+                }`}
             >
               <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>{isSubmitting ? "Mengirim..." : "Kirim Jawaban"}</span>
@@ -1003,11 +996,10 @@ function PlayQuizContent() {
 
             {quiz.time_limit_minutes > 0 && (
               <div
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs md:text-sm font-mono font-bold border transition-colors ${
-                  secondsRemaining < 60
-                    ? "bg-rose-50 text-rose-600 border-rose-200 animate-pulse"
-                    : "bg-slate-100 text-slate-700 border-slate-200"
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs md:text-sm font-mono font-bold border transition-colors ${secondsRemaining < 60
+                  ? "bg-rose-50 text-rose-600 border-rose-200 animate-pulse"
+                  : "bg-slate-100 text-slate-700 border-slate-200"
+                  }`}
               >
                 <Clock className="w-4 h-4" />
                 <span>{formatTime(secondsRemaining)}</span>
@@ -1062,26 +1054,23 @@ function PlayQuizContent() {
                     key={option.id}
                     type="button"
                     onClick={() => handleSelectOption(currentQuestion.id, option.id)}
-                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 cursor-pointer group ${
-                      isSelected
-                        ? "border-blue-600 bg-blue-50/70 shadow-sm"
-                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 bg-white"
-                    }`}
+                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 cursor-pointer group ${isSelected
+                      ? "border-blue-600 bg-blue-50/70 shadow-sm"
+                      : "border-slate-200 hover:border-slate-300 hover:bg-slate-50 bg-white"
+                      }`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center flex-shrink-0 transition-colors ${
-                        isSelected
-                          ? "bg-blue-600 text-white"
-                          : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
-                      }`}
+                      className={`w-8 h-8 rounded-xl font-bold text-xs flex items-center justify-center flex-shrink-0 transition-colors ${isSelected
+                        ? "bg-blue-600 text-white"
+                        : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
+                        }`}
                     >
                       {letter}
                     </div>
 
                     <span
-                      className={`flex-1 text-sm md:text-base font-medium leading-snug ${
-                        isSelected ? "text-blue-950 font-bold" : "text-slate-800"
-                      }`}
+                      className={`flex-1 text-sm md:text-base font-medium leading-snug ${isSelected ? "text-blue-950 font-bold" : "text-slate-800"
+                        }`}
                     >
                       {option.option_text}
                     </span>
@@ -1168,8 +1157,8 @@ function PlayQuizContent() {
             {finalScore >= 80
               ? "🌟 Luar Biasa! Hasil yang sangat membanggakan!"
               : finalScore >= 60
-              ? "👍 Kerja Bagus! Pemahamanmu sudah cukup baik."
-              : "💪 Tetap Semangat! Terus belajar dan latihan lagi ya!"}
+                ? "👍 Kerja Bagus! Pemahamanmu sudah cukup baik."
+                : "💪 Tetap Semangat! Terus belajar dan latihan lagi ya!"}
           </p>
         </div>
 
@@ -1213,11 +1202,10 @@ function PlayQuizContent() {
                 return (
                   <div
                     key={q.id}
-                    className={`p-3.5 rounded-xl border text-xs md:text-sm ${
-                      isCorrect
-                        ? "bg-emerald-50/50 border-emerald-200"
-                        : "bg-rose-50/50 border-rose-200"
-                    }`}
+                    className={`p-3.5 rounded-xl border text-xs md:text-sm ${isCorrect
+                      ? "bg-emerald-50/50 border-emerald-200"
+                      : "bg-rose-50/50 border-rose-200"
+                      }`}
                   >
                     <p className="font-semibold text-slate-800 mb-1.5">
                       {isMatchUp
